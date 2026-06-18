@@ -41,11 +41,21 @@ body { margin:0; background:#f5f7fa; color:#1f2937; }
 #resultCard { display:none; text-align:center; background:#fff; border-radius:16px; padding:24px; margin-top:20px; }
 #resultCard button { margin:8px; padding:12px 24px; border:none; border-radius:30px; background:#4facfe; color:#fff; font-size:16px; cursor:pointer; }
 
+/* 答案卡片（原有） */
 #answerCard { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50; align-items:center; justify-content:center; padding:20px; }
 #answerBox { background:#fff; border-radius:16px; padding:20px; max-height:80vh; overflow-y:auto; width:100%; max-width:420px; }
 #answerBox h3 { text-align:center; margin-bottom:12px; }
 .answerRow { font-size:14px; padding:6px 0; border-bottom:1px dashed #eee; }
 .answerRow span { float:right; color:#2563eb; }
+
+/* ✅ 答案表卡片（新增） */
+#tableCard { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50; align-items:center; justify-content:center; padding:20px; }
+#tableBox { background:#fff; border-radius:16px; padding:20px; max-height:85vh; overflow:auto; width:100%; max-width:440px; }
+#tableBox h3 { text-align:center; margin-bottom:12px; }
+table { width:100%; border-collapse: collapse; font-size:13px; }
+th, td { border:1px solid #e5e7eb; padding:6px 8px; text-align:center; }
+th { background:#f8fafc; font-weight:600; }
+tr:nth-child(even) { background:#f9fafb; }
 
 #historyPanel { display:none; background:#fff; padding:16px; border-radius:16px; margin-top:16px; }
 .day { margin-bottom:16px; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; }
@@ -89,12 +99,22 @@ body { margin:0; background:#f5f7fa; color:#1f2937; }
   <p id="resultText"></p>
   <button onclick="restart()">再来一次</button>
   <button onclick="showAnswers()">查看全部答案</button>
+  <button onclick="showTable()">查看答案表</button>
 </div>
 
+<!-- 答案卡片 -->
 <div id="answerCard" onclick="this.style.display='none'">
   <div id="answerBox" onclick="event.stopPropagation()">
     <h3>本次练习答案</h3>
     <div id="answerList"></div>
+  </div>
+</div>
+
+<!-- ✅ 答案表卡片（新增） -->
+<div id="tableCard" onclick="this.style.display='none'">
+  <div id="tableBox" onclick="event.stopPropagation()">
+    <h3>11~19 乘法答案表</h3>
+    <div id="tableContent"></div>
   </div>
 </div>
 
@@ -105,76 +125,31 @@ body { margin:0; background:#f5f7fa; color:#1f2937; }
 
 <script>
 const COUNT = 20;
-const STORAGE_KEY = "OMP_HISTORY_V6";
+const STORAGE_KEY = "OMP_HISTORY_V7";
 let state = { list:[], idx:0, start:0, totalMs:0, bestMs:Infinity, currentExpr:'', lastAnswers:[] };
 let isCounting = false;
 
 /* ===== 题库 ===== */
 function generateBank() {
-  const bank = [];
-
-  // 阶乘
-  [1,2,6,24,120,720,5040,40320,362880,3628800].forEach((v,i)=>bank.push({q:`${i+1}! = ?`, a:v}));
-
-  // 平方
-  for(let i=1;i<=30;i++) bank.push({q:`${i}² = ?`, a:i*i});
-
-  // 分数（高权重）
-  [["1/2","0.5"],["1/4","0.25"],["3/4","0.75"],["1/8","0.125"],["3/8","0.375"]].forEach(f=>{
-    for(let i=0;i<3;i++) bank.push({q:f[0]+'=?', a:parseFloat(f[1])});
-  });
-
-  // 11~19 × 1~9（格式：乘积 = 已知 × ?）
-  for(let a=11;a<=19;a++){
-    for(let b=1;b<=9;b++){
-      if(Math.random()>0.5){
-        bank.push({q:`${a*b} = ${a} × ?`, a:b});
-      }else{
-        bank.push({q:`${a*b} = ? × ${b}`, a:a});
-      }
-    }
-  }
-
-  // 特殊乘积
-  [[221,17,13],[247,19,13],[323,19,17],[10,5,2],[100,25,4],[500,125,4],[2500,625,4],[1000,125,8]].forEach(([p,x,y])=>{
-    if(Math.random()>0.5){
-      bank.push({q:`${p} = ${x} × ?`, a:y});
-    }else{
-      bank.push({q:`${p} = ? × ${y}`, a:x});
-    }
-  });
-
-  return bank;
+  const b = [];
+  [1,2,6,24,120,720,5040,40320,362880,3628800].forEach((v,i)=>b.push({q:`${i+1}! = ?`, a:v}));
+  for(let i=1;i<=30;i++) b.push({q:`${i}² = ?`, a:i*i});
+  [["1/2","0.5"],["1/4","0.25"],["3/4","0.75"],["1/8","0.125"],["3/8","0.375"]].forEach(f=>{for(let i=0;i<3;i++) b.push({q:f[0]+'=?', a:parseFloat(f[1])});});
+  for(let a=11;a<=19;a++){for(let b=1;b<=9;b++){if(Math.random()>0.5){b.push({q:`${a*b} = ${a} × ?`, a:b});}else{b.push({q:`${a*b} = ? × ${b}`, a:a});}}}
+  [[221,17,13],[247,19,13],[323,19,17],[10,5,2],[100,25,4],[500,125,4],[2500,625,4],[1000,125,8]].forEach(([p,x,y])=>{if(Math.random()>0.5){b.push({q:`${p} = ${x} × ?`, a:y});}else{b.push({q:`${p} = ? × ${y}`, a:x});}});
+  return b;
 }
 
-/* ===== UI ===== */
 function isMobile(){ return window.innerWidth<=768; }
-function adjustUI(){
-  isMobile()?(pcInput.style.display='none', mobileKeyboard.style.display='grid')
-             :(pcInput.style.display='block', mobileKeyboard.style.display='none', pcInput.focus());
-}
+function adjustUI(){ isMobile()?(pcInput.style.display='none', mobileKeyboard.style.display='grid'):(pcInput.style.display='block', mobileKeyboard.style.display='none', pcInput.focus()); }
 
-function renderProgress(){
-  bar.innerHTML='';
-  for(let i=0;i<COUNT;i++){
-    const d=document.createElement('div');
-    d.className='dot'+(i<state.idx?'done':'');
-    bar.appendChild(d);
-  }
-}
-
-/* ===== 练习流程 ===== */
 function startPracticeFlow(){
   if(isCounting) return; isCounting=true;
   startScreen.style.display='none'; practice.style.display='block';
   resultCard.style.display='none'; historyPanel.style.display='block';
   adjustUI();
   let c=3, cd=countdown; cd.style.display='flex'; cd.innerText=c;
-  const t=setInterval(()=>{
-    c--;
-    if(c===0){ clearInterval(t); cd.style.display='none'; isCounting=false; startNewRound(); }
-    cd.innerText=c;
-  },1000);
+  const t=setInterval(()=>{c--;if(c===0){clearInterval(t);cd.style.display='none';isCounting=false;startNewRound();}cd.innerText=c;},1000);
 }
 
 function startNewRound(){
@@ -186,8 +161,7 @@ function startNewRound(){
 function loadQuestion(){
   if(state.idx>=COUNT){ finishPractice(); return; }
   idx.innerText=state.idx+1; total.innerText=COUNT;
-  q.innerText=state.list[state.idx].q;
-  a.innerText=''; tip.innerText=''; pcInput.value='';
+  q.innerText=state.list[state.idx].q; a.innerText=''; tip.innerText=''; pcInput.value='';
   state.start=Date.now(); renderProgress();
   if(!isMobile()) pcInput.focus();
 }
@@ -198,16 +172,12 @@ function checkAnswer(ans){
   const correct=state.list[state.idx].a;
   const user=eval(ans.replace('×','*'));
   const ok=Math.abs(user-correct)<0.01;
-
   state.totalMs+=cost;
   if(cost<state.bestMs) state.bestMs=cost;
-
   time.innerText=(state.totalMs/1000).toFixed(1);
   best.innerText=(state.bestMs/1000).toFixed(1);
-
   tip.className=ok?'tip ok':'tip err';
   tip.innerText=ok?'✅ 正确':`❌ 错误 答案：${correct}`;
-
   state.lastAnswers.push({q:state.list[state.idx].q, a:correct});
   saveHistory(ok,cost);
   state.idx++;
@@ -225,11 +195,24 @@ function finishPractice(){
 /* ===== 答案卡片 ===== */
 function showAnswers(){
   let html='';
-  state.lastAnswers.forEach((x,i)=>{
-    html+=`<div class="answerRow">${i+1}. ${x.q} <span>${x.a}</span></div>`;
-  });
+  state.lastAnswers.forEach((x,i)=>{html+=`<div class="answerRow">${i+1}. ${x.q} <span>${x.a}</span></div>`;});
   answerList.innerHTML=html;
   answerCard.style.display='flex';
+}
+
+/* ✅ 答案表（新增） ===== */
+function showTable(){
+  let html='<table><tr><th>×</th>';
+  for(let j=1;j<=9;j++) html+=`<th>${j}</th>`;
+  html+='</tr>';
+  for(let i=11;i<=19;i++){
+    html+=`<tr><th>${i}</th>`;
+    for(let j=1;j<=9;j++) html+=`<td>${i*j}</td>`;
+    html+='</tr>';
+  }
+  html+='</table>';
+  tableContent.innerHTML=html;
+  tableCard.style.display='flex';
 }
 
 /* ===== 历史 ===== */
@@ -258,11 +241,8 @@ function showHistory(){
 function toggleDay(h){ const b=h.nextElementSibling; b.style.display=b.style.display==='block'?'none':'block'; }
 function restart(){ resultCard.style.display='none'; startPracticeFlow(); }
 
-/* ===== 输入 ===== */
 document.getElementById('startBtn').onclick=startPracticeFlow;
-document.querySelectorAll('.key[data-k]').forEach(k=>k.onclick=e=>{
-  state.currentExpr+=e.target.dataset.k; a.innerText=state.currentExpr;
-});
+document.querySelectorAll('.key[data-k]').forEach(k=>k.onclick=e=>{state.currentExpr+=e.target.dataset.k;a.innerText=state.currentExpr;});
 clr.onclick=()=>{state.currentExpr='';a.innerText='';pcInput.value='';};
 ok.onclick=()=>checkAnswer(state.currentExpr);
 pcInput.onkeydown=e=>{if(e.key==='Enter'){state.currentExpr=pcInput.value;checkAnswer(state.currentExpr);pcInput.value='';}};
