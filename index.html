@@ -1,521 +1,334 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>口算</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: #f6f7f9;
-            padding: 16px;
-            max-width: 720px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-            padding: 20px;
-            margin-bottom: 16px;
-        }
-
-        .title {
-            text-align: center;
-            font-size: 26px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 18px;
-        }
-
-        .stat-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-        }
-
-        .stat-item {
-            flex: 1;
-            min-width: 110px;
-            padding: 10px 6px;
-            background: #eff6ff;
-            border-radius: 12px;
-            text-align: center;
-            font-size: 14px;
-            color: #4b5563;
-        }
-
-        .stat-item span {
-            display: block;
-            font-size: 20px;
-            font-weight: bold;
-            color: #2563eb;
-        }
-
-        .progress-bar {
-            display: flex;
-            gap: 4px;
-            margin: 14px 0 24px;
-        }
-
-        .dot {
-            flex: 1;
-            height: 8px;
-            border-radius: 4px;
-            background: #e5e7eb;
-        }
-
-        .dot.done {
-            background: #22c55e;
-        }
-
-        .question-box {
-            text-align: center;
-            font-size: 44px;
-            font-weight: 600;
-            min-height: 72px;
-            color: #111827;
-            margin-bottom: 20px;
-        }
-
-        .ans-view {
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
-            font-size: 34px;
-            min-height: 70px;
-            margin-bottom: 20px;
-            color: #374151;
-        }
-
-        /* 数字键盘 */
-        .keyboard {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .key {
-            height: 64px;
-            border-radius: 12px;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            background: #f3f4f6;
-            transition: all 0.12s ease;
-        }
-
-        .key:active {
-            background: #d1d5db;
-            transform: scale(0.96);
-        }
-
-        .key.clear {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .key.enter {
-            background: #22c55e;
-            color: white;
-        }
-
-        .ctrl-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .ctrl-btn {
-            flex: 1;
-            height: 56px;
-            border-radius: 12px;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        #start {
-            background: #2563eb;
-            color: white;
-        }
-
-        #reset {
-            background: #6b7280;
-            color: white;
-        }
-
-        .tip {
-            text-align: center;
-            min-height: 28px;
-            margin-top: 12px;
-            font-size: 17px;
-        }
-
-        .tip.ok {
-            color: #16a34a;
-        }
-
-        .tip.err {
-            color: #dc2626;
-        }
-
-        .history-title {
-            font-size: 19px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #1f2937;
-        }
-
-        .history-wrap {
-            max-height: 240px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            border-radius: 12px;
-            padding: 10px;
-        }
-
-        .history-item {
-            padding: 7px 0;
-            font-size: 14px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .history-item:last-child {
-            border-bottom: none;
-        }
-
-        .ok-text {
-            color: #16a34a;
-        }
-
-        .err-text {
-            color: #dc2626;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>全能口算练习</title>
+<style>
+  body { font-family: sans-serif; text-align: center; background: #f5f5f5; padding: 20px; }
+  .container { max-width: 420px; margin: auto; background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  h2 { margin-top: 0; color: #333; }
+  .progress-box { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #e0e0e0; transition: all 0.3s; }
+  .dot.done { background: #52c41a; transform: scale(1.1); }
+  .question-box { font-size: 22px; font-weight: bold; color: #222; margin: 18px 0; min-height: 32px; }
+  .answer-box { font-size: 28px; color: #1677ff; letter-spacing: 2px; min-height: 36px; margin-bottom: 12px; font-family: monospace; }
+  .tip { margin-top: 10px; font-size: 14px; color: #888; height: 20px; }
+  .tip.ok { color: #52c41a; font-weight: bold; }
+  .tip.err { color: #ff4d4f; font-weight: bold; }
+  .btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .btn { padding: 14px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; background: #f0f0f0; color: #333; transition: all 0.2s; }
+  .btn:active { transform: scale(0.96); background: #e0e0e0; }
+  .btn-clear { background: #ffecec; color: #ff4d4f; }
+  .btn-enter { background: #e6fffb; color: #52c41a; font-weight: bold; }
+  .stats { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 14px; }
+  .stat-item span { color: #333; font-weight: bold; }
+  .actions { display: flex; gap: 12px; margin-top: 10px; }
+  .actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; background: #1677ff; color: #fff; }
+  .actions button:active { opacity: 0.8; }
+  .history-box { margin-top: 20px; text-align: left; max-height: 180px; overflow-y: auto; font-size: 13px; color: #444; border-top: 1px solid #eee; padding-top: 12px; }
+  .history-item { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #eee; line-height: 1.6; }
+  .ok-text { color: #52c41a; }
+  .err-text { color: #ff4d4f; }
+</style>
 </head>
 <body>
-    <div class="card">
-        <h1 class="title">口算练习</h1>
-        <div class="stat-row">
-            <div class="stat-item">题号<span id="curIdx">0</span>/20</div>
-            <div class="stat-item">本轮总用时<span id="totalSec">0.00</span>s</div>
-            <div class="stat-item">平均每题<span id="avgSec">0.00</span>s</div>
-        </div>
-        <div class="stat-row">
-            <div class="stat-item">单题耗时<span id="singleSec">0.00</span>s</div>
-            <div class="stat-item">本轮最快<span id="roundBest">--</span>s</div>
-            <div class="stat-item">历史最快<span id="globalBest">--</span>s</div>
-        </div>
 
-        <div class="progress-bar" id="progressBox"></div>
-        <div class="question-box" id="qBox">点击「开始练习」</div>
-        <div class="ans-view" id="ansBox"></div>
+<div class="container">
+  <h2>口算大挑战</h2>
+  
+  <div class="progress-box" id="progressBox"></div>
+  
+  <div class="question-box" id="qBox">点击开始练习</div>
+  <div class="answer-box" id="ansBox"></div>
+  <div class="tip" id="tipTxt">准备好后点击开始</div>
+  
+  <!-- 虚拟键盘 -->
+  <div class="btn-grid">
+    <button class="btn" onclick="inputNum('7')">7</button>
+    <button class="btn" onclick="inputNum('8')">8</button>
+    <button class="btn" onclick="inputNum('9')">9</button>
+    <button class="btn" onclick="inputNum('4')">4</button>
+    <button class="btn" onclick="inputNum('5')">5</button>
+    <button class="btn" onclick="inputNum('6')">6</button>
+    <button class="btn" onclick="inputNum('1')">1</button>
+    <button class="btn" onclick="inputNum('2')">2</button>
+    <button class="btn" onclick="inputNum('3')">3</button>
+    <button class="btn" onclick="inputNum('0')">0</button>
+    <button class="btn" onclick="inputNum('.')">.</button>
+    <button class="btn" onclick="inputNum('/')">÷</button>
+  </div>
+  <div class="btn-grid">
+    <button class="btn btn-clear" onclick="clearInput()">清除</button>
+    <button class="btn" onclick="inputNum('*')">×</button>
+    <button class="btn btn-enter" onclick="submitAnswer()">确定</button>
+  </div>
 
-        <div class="keyboard">
-            <button class="key num">1</button>
-            <button class="key num">2</button>
-            <button class="key num">3</button>
-            <button class="key num">4</button>
-            <button class="key num">5</button>
-            <button class="key num">6</button>
-            <button class="key num">7</button>
-            <button class="key num">8</button>
-            <button class="key num">9</button>
-            <button class="key num">0</button>
-            <button class="key clear" id="clearBtn">清除</button>
-            <button class="key enter" id="enterBtn">确定</button>
-        </div>
+  <div class="stats">
+    <div class="stat-item">最快: <span id="roundBest">--</span>s</div>
+    <div class="stat-item">平均: <span id="avgSec">0.00</span>s</div>
+    <div class="stat-item">总计: <span id="totalSec">0.00</span>s</div>
+  </div>
+  
+  <div class="actions">
+    <button id="startBtn">开始练习</button>
+    <button id="resetBtn">重新一轮</button>
+  </div>
 
-        <div class="ctrl-group">
-            <button class="ctrl-btn" id="start">开始练习</button>
-            <button class="ctrl-btn" id="reset">重新一轮</button>
-        </div>
-        <div class="tip" id="tipTxt">电脑端支持：数字键输入、回车提交、退格清除</div>
-    </div>
-
-    <div class="card">
-        <h3 class="history-title">答题记录（本地缓存）</h3>
-        <div class="history-wrap" id="historyBox"></div>
-    </div>
+  <div style="display: flex; justify-content: space-between; margin-top: 16px;">
+    <div style="font-weight: bold; color: #333;">本场最佳: <span id="globalBest">--</span>s</div>
+    <div style="font-weight: bold; color: #333;">当前进度: <span id="curIdx">0/20</span></div>
+  </div>
+  
+  <div class="history-box" id="historyBox"><strong>历史记录：</strong></div>
+</div>
 
 <script>
-// 本地存储key
-const STORE_KEY = "calcRecordDB";
 const QUESTION_COUNT = 20;
+const STORE_KEY = "math_quiz_records";
 
-// DOM快捷获取
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
-
-// DOM元素
-const qBox = $("#qBox");
-const ansBox = $("#ansBox");
-const tipTxt = $("#tipTxt");
-const progressBox = $("#progressBox");
-const historyBox = $("#historyBox");
-
-const curIdxDom = $("#curIdx");
-const totalSecDom = $("#totalSec");
-const avgSecDom = $("#avgSec");
-const singleSecDom = $("#singleSec");
-const roundBestDom = $("#roundBest");
-const globalBestDom = $("#globalBest");
-
-const startBtn = $("#start");
-const resetBtn = $("#reset");
-const clearBtn = $("#clearBtn");
-const enterBtn = $("#enterBtn");
-const numKeys = $$(".key.num");
-
-// 全局状态
-let state = {
-    list: [],
-    index: 0,
-    roundStart: null,
-    qStart: null,
-    totalMs: 0,
-    roundMinMs: Infinity,
-    finish: false,
-    currentQ: null,
-    inputStr: ""
-};
-
-// 题库
+// --- 题库生成 ---
 function createBank() {
-    const bank = [];
-    // ========== 11~19 × 1~9 全部转为 乘积 = ? × ? 格式 ==========
-    for(let a = 11; a <= 19; a++) {
-        for(let b = 1; b <= 9; b++) {
-            const res = a * b;
-            bank.push({ q: `${res} = ? × ?`, a: `${a}×${b}` });
-        }
-    }
-    // 固定分解
-    bank.push({ q: "221 = ? × ?", a: "17×13" });
-    bank.push({ q: "247 = ? × ?", a: "19×13" });
-    bank.push({ q: "323 = ? × ?", a: "19×17" });
-    bank.push({ q: "10 = ? × ?", a: "5×2" });
-    bank.push({ q: "100 = ? × ?", a: "25×4" });
-    bank.push({ q: "500 = ? × ?", a: "125×4" });
-    bank.push({ q: "2500 = ? × ?", a: "625×4" });
-    bank.push({ q: "1000 = ? × ?", a: "125×8" });
-    // 分数小数（原有格式不变）
-    bank.push({ q: "1 ÷ 2 = ?", a: "0.5" });
-    bank.push({ q: "3 ÷ 4 = ?", a: "0.75" });
-    bank.push({ q: "3 ÷ 8 = ?", a: "0.375" });
-    bank.push({ q: "7 ÷ 8 = ?", a: "0.875" });
-    bank.push({ q: "2 ÷ 3 ≈ ?", a: "0.67" });
-    bank.push({ q: "5 ÷ 6 ≈ ?", a: "0.83" });
-    bank.push({ q: "1 ÷ 4 = ?", a: "0.25" });
-    bank.push({ q: "1 ÷ 8 = ?", a: "0.125" });
-    bank.push({ q: "5 ÷ 8 = ?", a: "0.625" });
-    bank.push({ q: "1 ÷ 3 ≈ ?", a: "0.33" });
-    bank.push({ q: "1 ÷ 6 ≈ ?", a: "0.17" });
-    // 2^1~10
-    for(let i = 1; i <= 10; i++) bank.push({ q: `2的${i}次方 = ?`, a: String(2 ** i) });
-    //3^1~6
-    for(let i = 1; i <= 6; i++) bank.push({ q: `3的${i}次方 = ?`, a: String(3 ** i) });
-    //4^1~5
-    for(let i = 1; i <= 5; i++) bank.push({ q: `4的${i}次方 = ?`, a: String(4 ** i) });
-    //5^1~5
-    for(let i = 1; i <= 5; i++) bank.push({ q: `5的${i}次方 = ?`, a: String(5 ** i) });
-    //6^1~4
-    for(let i = 1; i <= 4; i++) bank.push({ q: `6的${i}次方 = ?`, a: String(6 ** i) });
-    //立方1~10
-    for(let i = 1; i <= 10; i++) bank.push({ q: `${i}的立方 = ?`, a: String(i ** 3) });
-    //平方1~29
-    for(let i = 1; i <= 29; i++) bank.push({ q: `${i}的平方 = ?`, a: String(i * i) });
-    return bank;
+  const bank = [];
+  
+  // 1. 质因数分解（x=?×?）
+  const primePairs = [
+    [11, 13], [11, 17], [11, 19], [13, 17], [13, 19], [17, 19],
+    [2, 49], [2, 121], [2, 169], [2, 289], [2, 361], [3, 49], [3, 121], [5, 49], [7, 49]
+  ];
+  primePairs.forEach(([a, b]) => bank.push({ q: `${a * b}=?×?`, a: `${a}×${b}` }));
+  
+  // 2. 特殊乘积
+  [[221, 17, 13], [247, 19, 13], [323, 19, 17]].forEach(([x, y, z]) => bank.push({ q: `${x}=?×?`, a: `${y}×${z}` }));
+  
+  // 3. 倍数表 (11~19的1~9倍)
+  for (let i = 11; i <= 19; i++) {
+    for (let j = 1; j <= 9; j++) bank.push({ q: `${i}*${j}=?`, a: String(i * j) });
+  }
+  
+  // 4. 平方与立方
+  for (let i = 1; i <= 10; i++) bank.push({ q: `${i}³=?`, a: String(i ** 3) });
+  for (let i = 1; i <= 29; i++) bank.push({ q: `${i}²=?`, a: String(i ** 2) });
+
+  // 5. 分数与小数
+  const fractions = [
+    ["1/2", "0.5"], ["1/3", "0.33"], ["1/4", "0.25"], ["1/6", "0.17"],
+    ["1/8", "0.125"], ["2/3", "0.67"], ["3/4", "0.75"], ["3/8", "0.375"],
+    ["5/6", "0.83"], ["7/8", "0.875"], ["5/8", "0.625"]
+  ];
+  fractions.forEach(([q, a]) => bank.push({ q: q + "=?", a }));
+
+  // 6. 快速乘除法 (x/y=z?)
+  const quickCalc = [
+    [10, 2], [100, 4], [125, 8], [2500, 4], [625, 4], [500, 8], [125, 4], [250, 2], [250, 4]
+  ];
+  quickCalc.forEach(([x, y]) => bank.push({ q: `${x}/${y}=?`, a: String(x / y) }));
+
+  return bank;
 }
 const fullBank = createBank();
 
-// 工具函数
+// --- 状态管理 ---
+const state = {
+  list: [], index: 0, currentQ: null, 
+  expr: "", finish: false, totalMs: 0, roundMinMs: Infinity
+};
+
+// --- DOM 元素 ---
+const qBox = document.getElementById('qBox');
+const ansBox = document.getElementById('ansBox');
+const tipTxt = document.getElementById('tipTxt');
+const progressBox = document.getElementById('progressBox');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const historyBox = document.getElementById('historyBox');
+const roundBestDom = document.getElementById('roundBest');
+const avgSecDom = document.getElementById('avgSec');
+const totalSecDom = document.getElementById('totalSec');
+const globalBestDom = document.getElementById('globalBest');
+const curIdxDom = document.getElementById('curIdx');
+
+// --- 工具函数 ---
 function shuffle(arr) {
-    const a = [...arr];
-    for(let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
+  return arr.sort(() => Math.random() - 0.5);
 }
 function ms2s(ms) {
-    return (ms / 1000).toFixed(2);
+  return (ms / 1000).toFixed(2);
 }
 
-// 本地存储读写
+// --- 本地存储 ---
 function getStore() {
-    const raw = localStorage.getItem(STORE_KEY);
-    return raw ? JSON.parse(raw) : { history: [], globalMinMs: null };
+  const raw = localStorage.getItem(STORE_KEY);
+  return raw ? JSON.parse(raw) : { history: [], globalMinMs: null };
 }
 function setStore(obj) {
-    localStorage.setItem(STORE_KEY, JSON.stringify(obj));
+  localStorage.setItem(STORE_KEY, JSON.stringify(obj));
 }
 
-// 渲染进度圆点
+// --- 渲染 ---
 function renderProgress() {
-    progressBox.innerHTML = "";
-    for(let i = 0; i < QUESTION_COUNT; i++) {
-        const dot = document.createElement("div");
-        dot.className = "dot" + (i < state.index ? " done" : "");
-        progressBox.appendChild(dot);
-    }
+  progressBox.innerHTML = "";
+  for (let i = 0; i < QUESTION_COUNT; i++) {
+    const dot = document.createElement("div");
+    dot.className = "dot" + (i < state.index ? " done" : "");
+    progressBox.appendChild(dot);
+  }
 }
-
-// 渲染历史与全局最快
 function renderDB() {
-    const db = getStore();
-    globalBestDom.textContent = db.globalMinMs ? ms2s(db.globalMinMs) : "--";
-    historyBox.innerHTML = "";
-    db.history.slice(-30).reverse().forEach(item => {
-        const div = document.createElement("div");
-        div.className = "history-item";
-        div.innerHTML = `
-            ${item.q}
-            <span class="${item.ok ? 'ok-text' : 'err-text'}">
-                你的答案:${item.userAns} 正确:${item.ans} | ${ms2s(item.ms)}s
-            </span>
-        `;
-        historyBox.appendChild(div);
-    })
+  const db = getStore();
+  globalBestDom.textContent = db.globalMinMs ? ms2s(db.globalMinMs) : "--";
+  historyBox.innerHTML = "<strong>历史记录：</strong>";
+  db.history.slice(-30).reverse().forEach(item => {
+    const div = document.createElement("div");
+    div.className = "history-item";
+    div.innerHTML = `
+      <div><strong>${item.q}</strong></div>
+      <div class="${item.ok ? 'ok-text' : 'err-text'}">
+        你的答案:${item.userAns} | 正确:${item.ans} | ${ms2s(item.ms)}s
+      </div>
+    `;
+    historyBox.appendChild(div);
+  });
 }
 
-// 生成一轮20题
+// --- 核心逻辑 ---
 function newRound() {
-    state.list = shuffle(fullBank).slice(0, QUESTION_COUNT);
-    state.index = 0;
-    state.roundStart = Date.now();
-    state.totalMs = 0;
-    state.roundMinMs = Infinity;
-    state.finish = false;
-    roundBestDom.textContent = "--";
-    totalSecDom.textContent = "0.00";
-    avgSecDom.textContent = "0.00";
-    singleSecDom.textContent = "0.00";
-    loadQ();
+  state.list = shuffle(fullBank).slice(0, QUESTION_COUNT);
+  state.index = 0;
+  state.totalMs = 0;
+  state.roundMinMs = Infinity;
+  state.finish = false;
+  state.expr = "";
+  roundBestDom.textContent = "--";
+  avgSecDom.textContent = "0.00";
+  totalSecDom.textContent = "0.00";
+  curIdxDom.textContent = "0/20";
+  loadQ();
 }
 
-// 加载当前题目
 function loadQ() {
-    renderProgress();
-    state.inputStr = "";
-    ansBox.textContent = "";
-    tipTxt.textContent = "电脑端支持：数字键输入、回车提交、退格清除";
-    tipTxt.className = "tip";
-    if(state.index >= QUESTION_COUNT) {
-        state.finish = true;
-        qBox.textContent = "本轮20题全部完成！点击重新一轮";
-        return;
-    }
-    state.currentQ = state.list[state.index];
-    qBox.textContent = state.currentQ.q;
-    state.qStart = Date.now();
-    curIdxDom.textContent = state.index + 1;
+  renderProgress();
+  state.expr = "";
+  ansBox.textContent = "";
+  tipTxt.textContent = "电脑端支持：数字键输入、回车提交、退格清除";
+  tipTxt.className = "tip";
+  
+  if (state.index >= QUESTION_COUNT) {
+    state.finish = true;
+    qBox.textContent = "本轮20题全部完成！点击重新一轮";
+    return;
+  }
+  
+  state.currentQ = state.list[state.index];
+  qBox.textContent = state.currentQ.q;
+  curIdxDom.textContent = `${state.index + 1}/20`;
 }
 
-// 输入数字
-function inputNum(num) {
-    if(state.finish) return;
-    state.inputStr += num;
-    ansBox.textContent = state.inputStr;
+// 修改输入逻辑：记录表达式
+function inputNum(char) {
+  if (state.finish) return;
+  state.expr += char;
+  ansBox.textContent = state.expr;
 }
 
-// 清除输入
+// 修改清除逻辑
 function clearInput() {
-    state.inputStr = "";
-    ansBox.textContent = "";
+  state.expr = "";
+  ansBox.textContent = "";
 }
 
-// 提交答案
+// 修改提交逻辑：计算表达式
 function submitAnswer() {
-    if(state.finish || !state.currentQ || state.inputStr === "") return;
-    const userAns = state.inputStr.trim();
-    const rightAns = state.currentQ.a;
-    const costMs = Date.now() - state.qStart;
-    singleSecDom.textContent = ms2s(costMs);
-    // 匹配忽略空格
-    const ok = userAns.replace(/\s/g, "") === rightAns.replace(/\s/g, "");
-    if(ok) {
-        tipTxt.className = "tip ok";
-        tipTxt.textContent = `回答正确，用时${ms2s(costMs)}秒`;
-        if(costMs < state.roundMinMs) state.roundMinMs = costMs;
-        roundBestDom.textContent = ms2s(state.roundMinMs);
-    } else {
-        tipTxt.className = "tip err";
-        tipTxt.textContent = `错误，正确答案：${rightAns}`;
-    }
-    // 累计总时间
-    state.totalMs += costMs;
-    const totalS = state.totalMs / 1000;
-    const avgS = totalS / (state.index + 1);
-    totalSecDom.textContent = totalS.toFixed(2);
-    avgSecDom.textContent = avgS.toFixed(2);
-    // 写入本地记录
-    const db = getStore();
-    db.history.push({
-        q: state.currentQ.q,
-        ans: rightAns,
-        userAns,
-        ok,
-        ms: costMs,
-        time: new Date().toLocaleString()
-    });
-    // 更新全局最快
-    if(db.globalMinMs === null || costMs < db.globalMinMs) {
-        db.globalMinMs = costMs;
-    }
-    setStore(db);
-    renderDB();
-    // 1.2秒后下一题
-    setTimeout(() => {
-        state.index++;
-        loadQ();
-    }, 1200);
+  if (state.finish || !state.currentQ || state.expr === "") return;
+  
+  const userAnsStr = state.expr.trim();
+  const correctAnsStr = state.currentQ.a;
+  
+  let userResult, correctResult;
+  try {
+    // 将 × 和 ÷ 替换为 * 和 / 以便 eval 计算
+    userResult = eval(userAnsStr.replace('×', '*').replace('÷', '/'));
+    correctResult = eval(correctAnsStr.replace('×', '*').replace('÷', '/').replace('³', '**3').replace('²', '**2'));
+  } catch (e) {
+    tipTxt.className = "tip err";
+    tipTxt.textContent = "表达式格式错误！";
+    return;
+  }
+
+  const costMs = Date.now() - state.qStart;
+  
+  // 浮点数比较容错（解决 0.1+0.2 !== 0.3 的问题）
+  const isMatch = Math.abs(userResult - correctResult) < 0.001;
+  const isApprox = correctAnsStr.includes('约等于') || correctAnsStr.includes('≈');
+  
+  let isCorrect = false;
+  if (isApprox) {
+    isCorrect = isMatch;
+  } else {
+    isCorrect = Math.abs(userResult - Math.round(correctResult)) < 0.001 && isMatch;
+  }
+
+  // 更新统计
+  if (isCorrect) {
+    tipTxt.className = "tip ok";
+    tipTxt.textContent = `回答正确，用时${ms2s(costMs)}秒`;
+    if (costMs < state.roundMinMs) state.roundMinMs = costMs;
+    roundBestDom.textContent = ms2s(state.roundMinMs);
+  } else {
+    tipTxt.className = "tip err";
+    tipTxt.textContent = `错误，正确答案：${correctAnsStr}`;
+  }
+  
+  state.totalMs += costMs;
+  const totalS = state.totalMs / 1000;
+  const avgS = totalS / (state.index + 1);
+  totalSecDom.textContent = totalS.toFixed(2);
+  avgSecDom.textContent = avgS.toFixed(2);
+
+  // 存入历史
+  const db = getStore();
+  db.history.push({
+    q: state.currentQ.q, ans: correctAnsStr, userAns: userAnsStr,
+    ok: isCorrect, ms: costMs, time: new Date().toLocaleString()
+  });
+  if (!db.globalMinMs || costMs < db.globalMinMs) db.globalMinMs = costMs;
+  setStore(db);
+  renderDB();
+
+  setTimeout(() => {
+    state.index++;
+    loadQ();
+  }, 1200);
 }
 
-// 页面虚拟键盘点击
-numKeys.forEach(key => {
-    key.onclick = () => inputNum(key.textContent);
-})
-clearBtn.onclick = clearInput;
-enterBtn.onclick = submitAnswer;
+// --- 初始化与监听 ---
+startBtn.onclick = () => {
+  state.qStart = Date.now();
+  newRound();
+};
+resetBtn.onclick = () => {
+  state.qStart = Date.now();
+  newRound();
+};
 
-// 电脑物理键盘监听
 document.addEventListener("keydown", e => {
-    // 数字 0-9
-    if (e.key >= "0" && e.key <= "9") {
-        e.preventDefault();
-        inputNum(e.key);
-    }
-    // 回车提交
-    if (e.key === "Enter") {
-        e.preventDefault();
-        submitAnswer();
-    }
-    // 退格 / 删除 清空
-    if (e.key === "Backspace" || e.key === "Delete") {
-        e.preventDefault();
-        clearInput();
-    }
+  if (e.key >= "0" && e.key <= "9") inputNum(e.key);
+  if (e.key === ".") inputNum(".");
+  if (e.key === "+" || e.key === "-" || e.key === "*" || e.key === "/") {
+    // 允许键盘输入 * 和 /
+    inputNum(e.key === "*" ? "*" : "/");
+  }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    submitAnswer();
+  }
+  if (e.key === "Backspace" || e.key === "Delete") {
+    e.preventDefault();
+    clearInput();
+  }
 });
 
-// 按钮绑定
-startBtn.onclick = newRound;
-resetBtn.onclick = newRound;
-
-// 初始化页面
+// 初始渲染
 renderDB();
-renderProgress();
 </script>
 </body>
 </html>
