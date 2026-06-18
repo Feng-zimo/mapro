@@ -2,778 +2,345 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>全能口算</title>
+
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont; }
+body { margin:0; background:#f5f7fa; }
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #0f172a;
-  color: #e2e8f0;
-  height: 100vh;
-  overflow: hidden;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* ===== 顶部 Tab 栏 ===== */
-.tabs {
-  display: flex;
-  position: fixed; top: 0; left: 0; right: 0;
-  z-index: 100;
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
-}
-.tab {
-  flex: 1; padding: 14px 0;
-  border: none; background: none;
-  color: #94a3b8; font-size: 15px; font-weight: 500;
-  cursor: pointer; position: relative;
-  transition: color .2s;
-}
-.tab.active { color: #38bdf8; }
-.tab.active::after {
-  content: ''; position: absolute; bottom: 0; left: 30%; right: 30%;
-  height: 2px; background: #38bdf8; border-radius: 1px;
-}
-
-/* ===== 页面容器 ===== */
-.page { display: none; height: 100vh; padding-top: 52px; }
-.page.active { display: flex; flex-direction: column; }
-
-/* ===== 练习页 ===== */
-#practice {
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-/* --- 等待开始界面 --- */
+/* ===== 全屏练习 ===== */
 #startScreen {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center;
-  padding: 20px;
+  position:fixed; inset:0;
+  background:linear-gradient(135deg,#4facfe,#00f2fe);
+  color:#fff; z-index:10;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
 }
-#startScreen .big-title {
-  font-size: 48px; font-weight: 800;
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 12px;
-}
-#startScreen .sub {
-  color: #64748b; font-size: 16px; margin-bottom: 40px;
-}
+#startScreen h1 { font-size:42px; margin-bottom:30px; }
 #startBtn {
-  width: 200px; height: 56px;
-  border-radius: 28px; border: none;
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
-  color: #fff; font-size: 20px; font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(56,189,248,.4);
-  transition: transform .15s, box-shadow .15s;
-}
-#startBtn:active {
-  transform: scale(.96);
-  box-shadow: 0 2px 10px rgba(56,189,248,.3);
+  font-size:22px; padding:16px 48px;
+  border:none; border-radius:40px;
+  background:#fff; color:#4facfe;
+  cursor:pointer; font-weight:600;
 }
 
-/* --- 倒计时遮罩 --- */
-#countdownOverlay {
-  display: none;
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 200;
-  background: rgba(15,23,42,.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-#countdownOverlay .cd-num {
-  font-size: 120px; font-weight: 900;
-  color: #38bdf8;
-  animation: cdPulse .4s ease-out;
-}
-@keyframes cdPulse {
-  0%   { transform: scale(1.6); opacity: 0; }
-  100% { transform: scale(1);   opacity: 1; }
-}
-#countdownOverlay .cd-tip {
-  color: #94a3b8; font-size: 16px; margin-top: 10px;
+/* ===== 倒计时 ===== */
+#countdown {
+  position:fixed; inset:0;
+  backdrop-filter: blur(20px);
+  background:rgba(0,0,0,.35);
+  color:#fff; font-size:90px;
+  display:none; align-items:center; justify-content:center;
+  z-index:20;
 }
 
-/* --- 答题界面 --- */
-#quizScreen { display: none; width: 100%; height: 100%; flex-direction: column; }
+/* ===== 练习区 ===== */
+.container {
+  max-width:460px; margin:auto; padding:16px;
+}
+.stats {
+  display:flex; justify-content:space-between;
+  font-size:13px; margin-bottom:10px;
+}
+.progress { display:flex; gap:6px; justify-content:center; margin:10px 0; }
+.dot { width:10px;height:10px;border-radius:50%;background:#e5e7eb; }
+.dot.done { background:#22c55e; }
 
-/* 顶部状态栏 */
-.quiz-top {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 16px;
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
-  font-size: 13px; color: #94a3b8;
+.question {
+  text-align:center; font-size:40px; font-weight:700;
+  margin:20px 0;
 }
-.quiz-top .stat-val { color: #38bdf8; font-weight: 600; }
+.answer {
+  text-align:center; font-size:32px;
+  color:#2563eb; min-height:40px;
+}
+.tip { text-align:center; min-height:24px; margin-top:8px; font-size:14px; }
+.tip.ok { color:#16a34a; }
+.tip.err { color:#dc2626; }
 
-/* 进度点 */
-.progress-bar {
-  display: flex; gap: 5px; justify-content: center;
-  padding: 10px 16px;
-}
-.progress-bar .dot {
-  width: 8px; height: 8px; border-radius: 50%; background: #334155;
-  transition: background .3s, transform .2s;
-}
-.progress-bar .dot.done  { background: #22c55e; }
-.progress-bar .dot.wrong { background: #ef4444; }
-.progress-bar .dot.now   { background: #38bdf8; transform: scale(1.3); }
-
-/* 题目区 */
-.question-area {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 10px 16px;
-}
-.question-text {
-  font-size: 42px; font-weight: 800;
-  letter-spacing: 2px;
-  text-align: center;
-  color: #f1f5f9;
-}
-.answer-display {
-  font-size: 36px; font-weight: 700;
-  color: #38bdf8;
-  min-height: 48px;
-  margin-top: 12px;
-  text-align: center;
-  letter-spacing: 2px;
-}
-.tip-msg {
-  min-height: 28px; margin-top: 8px;
-  font-size: 15px; font-weight: 500;
-  text-align: center;
-}
-.tip-msg.ok   { color: #22c55e; }
-.tip-msg.err  { color: #ef4444; }
-
-/* 键盘 */
+/* ===== 键盘 ===== */
 .keyboard {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  padding: 12px 16px 20px;
-  max-width: 360px;
-  margin: 0 auto;
-  width: 100%;
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:10px; margin-top:14px;
 }
 .key {
-  height: 54px; font-size: 22px; font-weight: 600;
-  border-radius: 12px; border: none;
-  background: #1e293b; color: #e2e8f0;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,.3);
-  transition: background .1s, transform .1s;
+  height:56px; font-size:22px;
+  border:none; border-radius:12px;
+  background:#f3f4f6; cursor:pointer;
 }
-.key:active { background: #334155; transform: scale(.95); }
-.key.enter  { background: #22c55e; color: #fff; }
-.key.enter:active { background: #16a34a; }
-.key.clear  { background: #ef4444; color: #fff; }
-.key.clear:active { background: #dc2626; }
+.key:active { background:#d1d5db; }
+.key.enter { background:#22c55e; color:#fff; }
+.key.clear { background:#fee2e2; color:#dc2626; }
 
-/* --- 结果页 --- */
-#resultScreen {
-  display: none; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center; padding: 20px;
+/* ===== 结果 ===== */
+#resultCard {
+  display:none; text-align:center;
+  background:#fff; border-radius:16px;
+  padding:24px; margin-top:20px;
 }
-#resultScreen .emoji { font-size: 64px; margin-bottom: 10px; }
-#resultScreen .r-title {
-  font-size: 28px; font-weight: 700; color: #f1f5f9;
-  margin-bottom: 6px;
-}
-#resultScreen .r-sub { color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
-
-.r-stats {
-  display: grid; grid-template-columns: repeat(2,1fr);
-  gap: 10px; width: 100%; max-width: 340px;
-  margin-bottom: 30px;
-}
-.r-stat-card {
-  background: #1e293b; border-radius: 12px;
-  padding: 14px 10px;
-}
-.r-stat-card .r-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
-.r-stat-card .r-value { font-size: 22px; font-weight: 700; color: #38bdf8; }
-.r-stat-card.wrong .r-value { color: #ef4444; }
-.r-stat-card.avg   .r-value { color: #facc15; }
-.r-stat-card.best  .r-value { color: #22c55e; }
-
-#againBtn {
-  width: 200px; height: 52px;
-  border-radius: 26px; border: none;
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
-  color: #fff; font-size: 18px; font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(56,189,248,.35);
-  transition: transform .15s;
-}
-#againBtn:active { transform: scale(.96); }
-
-/* ===== 历史记录页 ===== */
-#historyPage {
-  overflow-y: auto;
-  padding: 12px 12px 80px;
+#resultCard button {
+  margin-top:16px; padding:12px 36px;
+  border:none; border-radius:30px;
+  background:#4facfe; color:#fff;
+  font-size:16px; cursor:pointer;
 }
 
-.his-group {
-  background: #1e293b;
-  border-radius: 14px;
-  margin-bottom: 10px;
-  overflow: hidden;
+/* ===== 历史 ===== */
+#history {
+  margin-top:20px; background:#fff;
+  border-radius:16px; padding:14px;
 }
-.his-group-header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 16px;
-  cursor: pointer;
-  user-select: none;
+.day { border-bottom:1px solid #eee; }
+.dayHeader {
+  cursor:pointer; font-weight:600;
+  padding:10px 0; display:flex;
+  justify-content:space-between;
 }
-.his-group-header .his-date {
-  font-size: 15px; font-weight: 600; color: #f1f5f9;
-}
-.his-group-header .his-summary {
-  font-size: 12px; color: #94a3b8;
-}
-.his-group-header .arrow {
-  font-size: 12px; color: #64748b;
-  transition: transform .2s;
-}
-.his-group.open .arrow { transform: rotate(180deg); }
+.dayBody { display:none; padding-left:10px; }
+.item { font-size:13px; margin:6px 0; }
+.ok { color:#16a34a; }
+.err { color:#dc2626; }
 
-.his-best {
-  padding: 8px 16px;
-  background: rgba(34,197,94,.1);
-  color: #22c55e; font-size: 13px; font-weight: 500;
-  border-top: 1px solid #334155;
+#bestTag {
+  background:#fff; border-radius:16px;
+  padding:14px; margin-bottom:14px;
+  font-weight:600; color:#4facfe;
 }
-
-.his-items { display: none; }
-.his-group.open .his-items { display: block; }
-
-.his-item {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 16px;
-  border-top: 1px solid #263044;
-  font-size: 13px;
-}
-.his-item .his-q { color: #cbd5e1; }
-.his-item .his-a { font-weight: 600; }
-.his-item .his-a.ok  { color: #22c55e; }
-.his-item .his-a.err { color: #ef4444; }
-.his-item .his-ms { color: #64748b; font-size: 12px; margin-left: 8px; }
-
-#clearHis {
-  width: 100%; padding: 12px;
-  border-radius: 12px; border: none;
-  background: #ef4444; color: #fff;
-  font-size: 15px; font-weight: 600;
-  cursor: pointer; margin-top: 10px;
-}
-
-.no-his {
-  text-align: center; color: #64748b;
-  padding: 40px 0; font-size: 15px;
-}
-
-/* ===== 全局最佳横幅 ===== */
-.global-best {
-  background: linear-gradient(135deg, rgba(34,197,94,.15), rgba(56,189,248,.1));
-  border: 1px solid rgba(34,197,94,.3);
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-  text-align: center;
-}
-.global-best .gb-label { font-size: 12px; color: #64748b; }
-.global-best .gb-val   { font-size: 20px; font-weight: 700; color: #22c55e; }
 </style>
 </head>
+
 <body>
 
-<!-- Tab 栏 -->
-<div class="tabs">
-  <button class="tab active" data-tab="practice">练习</button>
-  <button class="tab" data-tab="history">历史记录</button>
+<!-- 开始 -->
+<div id="startScreen">
+  <h1>🧠 全能口算</h1>
+  <button id="startBtn">开始练习</button>
 </div>
 
-<!-- ===== 练习页 ===== -->
-<div id="practice" class="page active">
+<!-- 倒计时 -->
+<div id="countdown">3</div>
 
-  <!-- 开始界面 -->
-  <div id="startScreen">
-    <div class="big-title">全能口算</div>
-    <div class="sub">20 道精选口算 · 挑战你的极限</div>
-    <button id="startBtn">开始练习</button>
+<!-- 练习 -->
+<div class="container" id="practice" style="display:none">
+  <div class="stats">
+    <span>进度：<b id="idx">0/20</b></span>
+    <span>总耗时：<b id="total">0.00</b>s</span>
+    <span>最快：<b id="best">--</b>s</span>
   </div>
 
-  <!-- 倒计时遮罩 -->
-  <div id="countdownOverlay">
-    <div class="cd-num" id="cdNum">3</div>
-    <div class="cd-tip">准备好了吗？</div>
+  <div class="progress" id="bar"></div>
+
+  <div class="question" id="q">准备开始</div>
+  <div class="answer" id="ans"></div>
+  <div class="tip" id="tip"></div>
+
+  <div class="keyboard">
+    <button class="key" data-k="7">7</button>
+    <button class="key" data-k="8">8</button>
+    <button class="key" data-k="9">9</button>
+    <button class="key" data-k="4">4</button>
+    <button class="key" data-k="5">5</button>
+    <button class="key" data-k="6">6</button>
+    <button class="key" data-k="1">1</button>
+    <button class="key" data-k="2">2</button>
+    <button class="key" data-k="3">3</button>
+    <button class="key" data-k="0">0</button>
+    <button class="key" data-k=".">.</button>
+    <button class="key clear" id="clr">清除</button>
+    <button class="key enter" id="ok">确定</button>
   </div>
 
-  <!-- 答题界面 -->
-  <div id="quizScreen">
-    <div class="quiz-top">
-      <span>进度 <b class="stat-val" id="qIdx">1/20</b></span>
-      <span>总耗时 <b class="stat-val" id="qTotal">0.00</b>s</span>
-      <span>最快 <b class="stat-val" id="qBest">--</b>s</span>
-    </div>
-    <div class="progress-bar" id="qBar"></div>
-    <div class="question-area">
-      <div class="question-text" id="qText"></div>
-      <div class="answer-display" id="qAns"></div>
-      <div class="tip-msg" id="qTip"></div>
-    </div>
-    <div class="keyboard">
-      <button class="key" data-k="7">7</button>
-      <button class="key" data-k="8">8</button>
-      <button class="key" data-k="9">9</button>
-      <button class="key" data-k="4">4</button>
-      <button class="key" data-k="5">5</button>
-      <button class="key" data-k="6">6</button>
-      <button class="key" data-k="1">1</button>
-      <button class="key" data-k="2">2</button>
-      <button class="key" data-k="3">3</button>
-      <button class="key" data-k="0">0</button>
-      <button class="key" data-k=".">.</button>
-      <button class="key clear" id="qClr">清除</button>
-      <button class="key enter" id="qOk">确定</button>
-    </div>
+  <div id="resultCard">
+    <h2 id="rTitle"></h2>
+    <p id="rText"></p>
+    <button onclick="restart()">再来一次</button>
   </div>
+</div>
 
-  <!-- 结果界面 -->
-  <div id="resultScreen">
-    <div class="emoji" id="rEmoji">🎉</div>
-    <div class="r-title" id="rTitle">练习完成！</div>
-    <div class="r-sub" id="rSub"></div>
-    <div class="r-stats">
-      <div class="r-stat-card">
-        <div class="r-label">总题数</div>
-        <div class="r-value" id="rTotal">20</div>
-      </div>
-      <div class="r-stat-card wrong">
-        <div class="r-label">错误</div>
-        <div class="r-value" id="rWrong">0</div>
-      </div>
-      <div class="r-stat-card avg">
-        <div class="r-label">平均速度</div>
-        <div class="r-value" id="rAvg">0.00s</div>
-      </div>
-      <div class="r-stat-card best">
-        <div class="r-label">最快一题</div>
-        <div class="r-value" id="rBest">0.00s</div>
-      </div>
-    </div>
-    <button id="againBtn">再来一次</button>
-  </div>
-
-</div><!-- /practice -->
-
-<!-- ===== 历史页 ===== -->
-<div id="historyPage" class="page">
-  <div id="hisContent"></div>
-  <button id="clearHis">清除历史记录</button>
+<!-- 历史 -->
+<div class="container" id="history" style="display:none">
+  <div id="bestTag"></div>
+  <div id="historyList"></div>
 </div>
 
 <script>
-/* ============================================================
-   题库
-   ============================================================ */
 const COUNT = 20, KEY = "calcDB";
+let state = {
+  list:[], idx:0, start:0,
+  total:0, best:Infinity, expr:""
+};
 
-function buildBank() {
+/* ===== 题库 ===== */
+function bank(){
   const b = [];
 
-  // 乘积 = ? × ?
-  for (let a = 11; a <= 19; a++)
-    for (let b_ = 1; b_ <= 9; b_++)
-      b.push({ q: `${a * b_} = ? × ?`, a: `${a}×${b_}` });
+  for (let a=11;a<=19;a++)
+    for (let b_=1;b_<=9;b_++)
+      b.push({ q:`${a*b_}=?×?`, a:`${a}×${b_}` });
 
-  // 平方
-  for (let i = 1; i <= 29; i++)
-    b.push({ q: `${i}² = ?`, a: String(i * i) });
+  for (let i=1;i<=29;i++) b.push({ q:`${i}²=?`, a:i*i });
+  for (let i=1;i<=10;i++) b.push({ q:`${i}³=?`, a:i*i*i });
 
-  // 立方
-  for (let i = 1; i <= 10; i++)
-    b.push({ q: `${i}³ = ?`, a: String(i * i * i) });
+  for (let i=1;i<=10;i++) b.push({ q:`2^${i}=?`, a:2**i });
 
-  // 分数（权重 x3 → 出现概率更高）
-  const fractions = [
+  [1,2,6,24,120,720,5040,40320,362880,3628800]
+    .forEach((v,i)=>b.push({ q:`${i+1}! = ?`, a:v }));
+
+  const f=[
     ["1/2","0.5"],["1/3","0.33"],["1/4","0.25"],
     ["1/6","0.17"],["1/8","0.125"],
     ["2/3","0.67"],["3/4","0.75"],
     ["3/8","0.375"],["5/6","0.83"],
     ["7/8","0.875"],["5/8","0.625"]
   ];
-  fractions.forEach(([q, a]) => {
-    b.push({ q: `${q} = ?`, a });
-    b.push({ q: `${q} = ?`, a });
-    b.push({ q: `${q} = ?`, a });
+  f.forEach(([q,a])=>{
+    for(let i=0;i<3;i++) b.push({ q:`${q}=?`, a });
   });
-
-  // 指数
-  for (let i = 1; i <= 10; i++) b.push({ q: `2^${i} = ?`, a: String(2 ** i) });
-  for (let i = 1; i <= 6;  i++) b.push({ q: `3^${i} = ?`, a: String(3 ** i) });
-  for (let i = 1; i <= 5;  i++) b.push({ q: `4^${i} = ?`, a: String(4 ** i) });
-  for (let i = 1; i <= 5;  i++) b.push({ q: `5^${i} = ?`, a: String(5 ** i) });
-  for (let i = 1; i <= 4;  i++) b.push({ q: `6^${i} = ?`, a: String(6 ** i) });
-
-  // 阶乘
-  [1,2,6,24,120,720,5040,40320,362880,3628800]
-    .forEach((v, i) => b.push({ q: `${i + 1}! = ?`, a: String(v) }));
 
   return b;
 }
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
+
+/* ===== 练习流程 ===== */
+function newRound(){
+  state.list = shuffle(bank()).slice(0,COUNT);
+  state.idx=0; state.total=0; state.best=Infinity; state.expr="";
+  load();
 }
 
-/* ============================================================
-   状态
-   ============================================================ */
-let state = {
-  list: [], idx: 0,
-  start: 0, total: 0, best: Infinity,
-  wrong: 0,
-  expr: "",
-  results: []   // { q, user, ok, ms }
+function load(){
+  renderBar();
+  document.getElementById("idx").innerText=(state.idx+1)+"/"+COUNT;
+  document.getElementById("ans").innerText="";
+  document.getElementById("tip").innerText="";
+
+  if(state.idx>=COUNT){
+    finish();
+    return;
+  }
+  state.start=Date.now();
+  document.getElementById("q").innerText=state.list[state.idx].q;
+}
+
+function submit(){
+  if(!state.expr) return;
+  const cost=Date.now()-state.start;
+  const ok=Math.abs(
+    eval(state.expr)-eval(state.list[state.idx].a)
+  )<0.01;
+
+  state.total+=cost;
+  if(cost<state.best) state.best=cost;
+
+  document.getElementById("total").innerText=(state.total/1000).toFixed(2);
+  document.getElementById("best").innerText=(state.best/1000).toFixed(2);
+
+  const tip=document.getElementById("tip");
+  tip.className=ok?"tip ok":"tip err";
+  tip.innerText=ok?"✅ 正确":"❌ 错误 答案："+state.list[state.idx].a;
+
+  save(ok,cost);
+  state.idx++;
+  state.expr="";
+  setTimeout(load, ok?600:800);
+}
+
+/* ===== 结束 ===== */
+function finish(){
+  document.getElementById("q").innerText="🎉 练习完成";
+  document.getElementById("resultCard").style.display="block";
+  document.getElementById("rTitle").innerText="本次练习数据";
+  document.getElementById("rText").innerText=
+    `总用时 ${(state.total/1000).toFixed(1)}s | 最快 ${state.best/1000}s`;
+  showHistory();
+}
+
+/* ===== 历史 ===== */
+function save(ok,ms){
+  const db=JSON.parse(localStorage.getItem(KEY)||"[]");
+  db.push({
+    q:state.list[state.idx-1].q,
+    user:state.expr,
+    ok,
+    ms,
+    date:new Date().toLocaleDateString()
+  });
+  localStorage.setItem(KEY,JSON.stringify(db.slice(-200)));
+  setTimeout(showHistory,300);
+}
+
+function showHistory(){
+  const db=JSON.parse(localStorage.getItem(KEY)||"[]");
+  const days={};
+  db.forEach(r=>{
+    days[r.date]=days[r.date]||[];
+    days[r.date].push(r);
+  });
+
+  let html="";
+  let bestAvg=Infinity;
+
+  Object.keys(days).reverse().forEach(date=>{
+    const g=days[date];
+    const avg=g.reduce((s,x)=>s+x.ms,0)/g.length;
+    if(avg<bestAvg) bestAvg=avg;
+
+    html+=`<div class="day">
+      <div class="dayHeader" onclick="this.nextElementSibling.style.display=
+        this.nextElementSibling.style.display==='block'?'none':'block'">
+        <span>${date} 练习（${g.length}题）</span>
+        <span>平均速度 ${avg.toFixed(0)}ms</span>
+      </div>
+      <div class="dayBody">`+
+      g.map(h=>`<div class="item ${h.ok?'ok':'err'}">
+        ${h.q} → ${h.user} (${h.ms/1000}s)
+      </div>`).join("")+
+      `</div></div>`;
+  });
+
+  document.getElementById("historyList").innerHTML=html;
+  document.getElementById("bestTag").innerText=
+    "🏅 历史最佳平均速度："+(bestAvg===Infinity?"--":(bestAvg/1000).toFixed(2)+"s");
+}
+
+/* ===== UI 控制 ===== */
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("startScreen").style.display="none";
+  document.getElementById("practice").style.display="block";
+  document.getElementById("history").style.display="block";
+
+  let n=3,box=document.getElementById("countdown");
+  box.style.display="flex";
+  box.innerText=n;
+  const t=setInterval(()=>{
+    n--;
+    if(n===0){ clearInterval(t); box.style.display="none"; newRound(); }
+    box.innerText=n;
+  },1000);
 };
 
-/* ============================================================
-   DOM
-   ============================================================ */
-const $ = id => document.getElementById(id);
-
-// 页面
-const practicePage = $("practice");
-const historyPage  = $("historyPage");
-
-// 练习子界面
-const startScreen  = $("startScreen");
-const quizScreen   = $("quizScreen");
-const resultScreen = $("resultScreen");
-const cdOverlay    = $("countdownOverlay");
-
-/* ============================================================
-   Tab 切换
-   ============================================================ */
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-    $(tab.dataset.tab).classList.add("active");
-    if (tab.dataset.tab === "history") renderHistory();
-  });
-});
-
-/* ============================================================
-   开始练习 → 倒计时 3s
-   ============================================================ */
-$("startBtn").addEventListener("click", () => {
-  state.list = shuffle(buildBank()).slice(0, COUNT);
-  state.idx = 0;
-  state.total = 0;
-  state.best = Infinity;
-  state.wrong = 0;
-  state.expr = "";
-  state.results = [];
-
-  startScreen.style.display = "none";
-  cdOverlay.style.display = "flex";
-
-  let n = 3;
-  $("cdNum").textContent = n;
-  const iv = setInterval(() => {
-    n--;
-    if (n <= 0) {
-      clearInterval(iv);
-      cdOverlay.style.display = "none";
-      quizScreen.style.display = "flex";
-      loadQuestion();
-    } else {
-      $("cdNum").textContent = n;
-      // 重触发动画
-      const el = $("cdNum");
-      el.style.animation = "none";
-      el.offsetHeight; // reflow
-      el.style.animation = "";
-    }
-  }, 1000);
-});
-
-/* ============================================================
-   加载题目
-   ============================================================ */
-function loadQuestion() {
-  if (state.idx >= COUNT) { finish(); return; }
-
-  state.start = performance.now();
-  state.expr = "";
-  $("qAns").textContent = "";
-  $("qTip").textContent = "";
-  $("qTip").className = "tip-msg";
-  $("qText").textContent = state.list[state.idx].q;
-  $("qIdx").textContent = (state.idx + 1) + "/" + COUNT;
-  renderDots();
+function restart(){
+  document.getElementById("resultCard").style.display="none";
+  newRound();
 }
 
-/* ============================================================
-   进度点
-   ============================================================ */
-function renderDots() {
-  const bar = $("qBar");
-  bar.innerHTML = "";
-  for (let i = 0; i < COUNT; i++) {
-    const d = document.createElement("div");
-    d.className = "dot";
-    if (i < state.idx) d.classList.add(state.results[i]?.ok ? "done" : "wrong");
-    if (i === state.idx) d.classList.add("now");
+document.querySelectorAll(".key[data-k]")
+  .forEach(b=>b.onclick=e=>state.expr+=e.target.dataset.k);
+document.getElementById("clr").onclick=()=>state.expr="";
+document.getElementById("ok").onclick=submit;
+
+renderBar();
+function renderBar(){
+  const bar=document.getElementById("bar"); bar.innerHTML="";
+  for(let i=0;i<COUNT;i++){
+    const d=document.createElement("div");
+    d.className="dot"+(i<state.idx?" done":"");
     bar.appendChild(d);
   }
 }
 
-/* ============================================================
-   键盘输入
-   ============================================================ */
-document.querySelectorAll(".key[data-k]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    state.expr += btn.dataset.k;
-    $("qAns").textContent = state.expr;
-  });
-});
-$("qClr").addEventListener("click", () => {
-  state.expr = "";
-  $("qAns").textContent = "";
-});
-$("qOk").addEventListener("click", submit);
-
-document.addEventListener("keydown", e => {
-  if (quizScreen.style.display !== "flex") return;
-  if (e.key >= "0" && e.key <= "9") { state.expr += e.key; $("qAns").textContent = state.expr; }
-  if (e.key === ".") { state.expr += "."; $("qAns").textContent = state.expr; }
-  if (e.key === "Enter") submit();
-  if (e.key === "Backspace") { state.expr = state.expr.slice(0, -1); $("qAns").textContent = state.expr; }
-});
-
-/* ============================================================
-   提交答案 → 错直接下一题
-   ============================================================ */
-function submit() {
-  if (!state.expr) return;
-  const ms = performance.now() - state.start;
-  const item = state.list[state.idx];
-  const userVal = eval(state.expr.replace(/×/g, "*"));
-  const correctVal = eval(item.a.replace(/×/g, "*"));
-  const ok = Math.abs(userVal - correctVal) < 0.01;
-
-  state.total += ms;
-  if (ms < state.best) state.best = ms;
-  if (!ok) state.wrong++;
-
-  state.results.push({ q: item.q, user: state.expr, ok, ms, correct: item.a });
-
-  $("qTotal").textContent = (state.total / 1000).toFixed(2);
-  $("qBest").textContent  = (state.best / 1000).toFixed(2);
-
-  // 显示对错，然后自动下一题
-  const tip = $("qTip");
-  tip.className = "tip-msg " + (ok ? "ok" : "err");
-  tip.textContent = ok ? "正确 ✅" : `错误 ❌ ${item.a}`;
-
-  state.idx++;
-  setTimeout(loadQuestion, ok ? 600 : 800);
-}
-
-/* ============================================================
-   完成 → 结果页
-   ============================================================ */
-function finish() {
-  quizScreen.style.display = "none";
-  resultScreen.style.display = "flex";
-
-  const right = COUNT - state.wrong;
-  const avg = state.total / COUNT / 1000;
-  const best = state.best / 1000;
-
-  $("rTotal").textContent = COUNT;
-  $("rWrong").textContent = state.wrong;
-  $("rAvg").textContent   = avg.toFixed(2) + "s";
-  $("rBest").textContent  = best.toFixed(2) + "s";
-
-  if (state.wrong === 0) {
-    $("rEmoji").textContent = "🏆";
-    $("rTitle").textContent = "满分！太强了！";
-    $("rSub").textContent  = "没有任何失误，完美通关";
-  } else if (state.wrong <= 3) {
-    $("rEmoji").textContent = "🌟";
-    $("rTitle").textContent = "非常不错！";
-    $("rSub").textContent  = `只错了 ${state.wrong} 题，继续加油`;
-  } else {
-    $("rEmoji").textContent = "💪";
-    $("rTitle").textContent = "继续练习！";
-    $("rSub").textContent  = `错了 ${state.wrong} 题，下次会更好`;
-  }
-
-  // 保存历史
-  saveHistory(avg, best);
-}
-
-$("againBtn").addEventListener("click", () => {
-  resultScreen.style.display = "none";
-  startScreen.style.display = "flex";
-});
-
-/* ============================================================
-   历史记录
-   ============================================================ */
-function saveHistory(avg, best) {
-  const db = JSON.parse(localStorage.getItem(KEY) || "[]");
-  const now = new Date();
-  const record = {
-    id: Date.now(),
-    date: now.toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }),
-    time: now.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
-    total: COUNT,
-    wrong: state.wrong,
-    avg: avg.toFixed(2),
-    best: best.toFixed(2),
-    items: state.results
-  };
-
-  // 更新全局最佳
-  const gb = localStorage.getItem("calcBest");
-  if (!gb || avg < parseFloat(gb)) {
-    localStorage.setItem("calcBest", avg.toFixed(2));
-  }
-
-  db.push(record);
-  localStorage.setItem(KEY, JSON.stringify(db));
-}
-
-function renderHistory() {
-  const db = JSON.parse(localStorage.getItem(KEY) || "[]");
-  const his = $("hisContent");
-  his.innerHTML = "";
-
-  if (db.length === 0) {
-    his.innerHTML = '<div class="no-his">暂无练习记录</div>';
-    return;
-  }
-
-  // 全局最佳
-  const gb = localStorage.getItem("calcBest");
-  if (gb) {
-    const b = document.createElement("div");
-    b.className = "global-best";
-    b.innerHTML = `<div class="gb-label">🏅 历史最佳平均速度</div><div class="gb-val">${gb}s</div>`;
-    his.appendChild(b);
-  }
-
-  // 按日期分组
-  const groups = {};
-  db.forEach(r => {
-    if (!groups[r.date]) groups[r.date] = [];
-    groups[r.date].push(r);
-  });
-
-  Object.keys(groups).reverse().forEach(date => {
-    const g = groups[date];
-    const div = document.createElement("div");
-    div.className = "his-group";
-
-    // header
-    const header = document.createElement("div");
-    header.className = "his-group-header";
-    header.innerHTML = `
-      <div>
-        <div class="his-date">${date} 练习（${g.length}次）</div>
-        <div class="his-summary">平均正确率 ${calcRate(g)}% · 平均速度 ${calcAvg(g)}s</div>
-      </div>
-      <div class="arrow">▼</div>
-    `;
-    header.addEventListener("click", () => div.classList.toggle("open"));
-
-    // best
-    const bestDiv = document.createElement("div");
-    bestDiv.className = "his-best";
-    bestDiv.textContent = "🏆 最佳：平均速度 " + Math.min(...g.map(x => parseFloat(x.avg))).toFixed(2) + "s";
-
-    // items
-    const itemsDiv = document.createElement("div");
-    itemsDiv.className = "his-items";
-    g.forEach(r => {
-      const item = document.createElement("div");
-      item.className = "his-group";
-      item.style.margin = "6px 0";
-      item.innerHTML = `
-        <div class="his-group-header" style="padding:8px 12px;font-size:13px;">
-          <span>${r.time} · ${r.total - r.wrong}/${r.total} 正确 · 平均 ${r.avg}s</span>
-          <span class="arrow" style="font-size:10px;">▼</span>
-        </div>
-        <div class="his-items">
-          ${r.items.map(it => `
-            <div class="his-item">
-              <span class="his-q">${it.q}</span>
-              <span>
-                <span class="his-a ${it.ok ? "ok" : "err"}">${it.ok ? it.user : it.correct}</span>
-                <span class="his-ms">${(it.ms / 1000).toFixed(2)}s</span>
-              </span>
-            </div>
-          `).join("")}
-        </div>
-      `;
-      // 子项也支持展开折叠
-      item.querySelector(".his-group-header").addEventListener("click", function() {
-        item.classList.toggle("open");
-      });
-      itemsDiv.appendChild(item);
-    });
-
-    div.appendChild(header);
-    div.appendChild(bestDiv);
-    div.appendChild(itemsDiv);
-    his.appendChild(div);
-  });
-}
-
-function calcRate(groups) {
-  let total = 0, wrong = 0;
-  groups.forEach(r => { total += r.total; wrong += r.wrong; });
-  return ((total - wrong) / total * 100).toFixed(1);
-}
-function calcAvg(groups) {
-  let sum = 0;
-  groups.forEach(r => sum += parseFloat(r.avg));
-  return (sum / groups.length).toFixed(2);
-}
-
-$("clearHis").addEventListener("click", () => {
-  if (confirm("确定清除所有历史记录？")) {
-    localStorage.removeItem(KEY);
-    localStorage.removeItem("calcBest");
-    renderHistory();
-  }
-});
+showHistory();
 </script>
 </body>
 </html>
