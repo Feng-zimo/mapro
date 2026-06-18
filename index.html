@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>速算口算题库</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      max-width: 720px;
+      margin: 30px auto;
+      padding: 0 20px;
+      background: #f6f8fa;
+      color: #222;
+    }
+    .box {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 10px #00000010;
+      margin-bottom: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    .stat-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-item {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px;
+      background: #eff6ff;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .question {
+      font-size: 32px;
+      text-align: center;
+      margin: 30px 0;
+      font-weight: bold;
+      min-height: 60px;
+    }
+    input {
+      width: 100%;
+      font-size: 22px;
+      padding: 14px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      text-align: center;
+      outline: none;
+    }
+    input:focus {
+      border-color: #2563eb;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #submit {
+      background: #2563eb;
+      color: white;
+    }
+    #next {
+      background: #10b981;
+      color: white;
+    }
+    #reset {
+      background: #ef4444;
+      color: white;
+    }
+    .history-title {
+      margin: 24px 0 10px;
+      font-size: 18px;
+    }
+    #historyList {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .history-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #f1f1f1;
+      font-size: 14px;
+    }
+    .tip {
+      color: #666;
+      font-size: 14px;
+      margin-top: 8px;
+      text-align: center;
+    }
+    .correct { color: #059669; }
+    .wrong { color: #dc2626; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>速算口算训练（一轮20题）</h1>
+  <div class="stat-row">
+    <div class="stat-item">题号 <span id="currentNum">0</span>/20</div>
+    <div class="stat-item">本轮用时 <span id="totalTime">0.00</span>s</div>
+    <div class="stat-item">平均每题 <span id="avgTime">0.00</span>s</div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-item">当前单题耗时 <span id="singleTime">0.00</span>s</div>
+    <div class="stat-item">本轮最快 <span id="roundFast">--</span>s</div>
+    <div class="stat-item">历史最快 <span id="globalFast">--</span>s</div>
+  </div>
+
+  <div class="question" id="qText">点击开始训练</div>
+  <input type="text" id="ansInput" placeholder="输入答案后回车提交">
+  <div class="btn-group">
+    <button id="submit">提交答案</button>
+    <button id="next" disabled>下一题</button>
+    <button id="reset">重新开始一轮</button>
+  </div>
+  <div class="tip" id="tipMsg"></div>
+</div>
+
+<div class="box">
+  <h3 class="history-title">答题历史（本地缓存）</h3>
+  <div id="historyList"></div>
+</div>
+
+<script>
+// ========== 题库数据 ==========
+const pool = {
+  // 固定乘法分解
+  factor: [
+    {q:"221 = ? × ?", a:"17×13"},
+    {q:"247 = ? × ?", a:"19×13"},
+    {q:"323 = ? × ?", a:"19×17"},
+    {q:"10 = ? × ?", a:"5×2"},
+    {q:"100 = ? × ?", a:"25×4"},
+    {q:"500 = ? × ?", a:"125×4"},
+    {q:"2500 = ? × ?", a:"625×4"},
+    {q:"1000 = ? × ?", a:"125×8"},
+  ],
+  // 11~19 × 1~9
+  teenMult: [],
+  // 分数小数
+  fraction: [
+    {q:"1 ÷ 2 = ?", a:"0.5"},
+    {q:"3 ÷ 4 = ?", a:"0.75"},
+    {q:"3 ÷ 8 = ?", a:"0.375"},
+    {q:"7 ÷ 8 = ?", a:"0.875"},
+    {q:"2 ÷ 3 ≈ ?", a:"0.67"},
+    {q:"5 ÷ 6 ≈ ?", a:"0.83"},
+    {q:"1 ÷ 4 = ?", a:"0.25"},
+    {q:"1 ÷ 8 = ?", a:"0.125"},
+    {q:"5 ÷ 8 = ?", a:"0.625"},
+    {q:"1 ÷ 3 ≈ ?", a:"0.33"},
+    {q:"1 ÷ 6 ≈ ?", a:"0.17"},
+  ],
+  // 2^1~10
+  pow2: [],
+  //3^1~6
+  pow3: [],
+  //4^1~5
+  pow4: [],
+  //5^1~5
+  pow5: [],
+  //6^1~4
+  pow6: [],
+  //1~10立方
+  cube: [],
+  //1~29平方
+  square: []
+};
+
+// 自动生成11~19 ×1~9
+for(let n=11;n<=19;n++){
+  for(let k=1;k<=9;k++){
+    pool.teenMult.push({
+      q:`${n} × ${k} = ?`,
+      a:`${n*k}`
+    })
+  }
+}
+// 2^1~10
+for(let i=1;i<=10;i++) pool.pow2.push({q:`2的${i}次方 = ?`, a:`${2**i}`});
+//3^1~6
+for(let i=1;i<=6;i++) pool.pow3.push({q:`3的${i}次方 = ?`, a:`${3**i}`});
+//4^1~5
+for(let i=1;i<=5;i++) pool.pow4.push({q:`4的${i}次方 = ?`, a:`${4**i}`});
+//5^1~5
+for(let i=1;i<=5;i++) pool.pow5.push({q:`5的${i}次方 = ?`, a:`${5**i}`});
+//6^1~4
+for(let i=1;i<=4;i++) pool.pow6.push({q:`6的${i}次方 = ?`, a:`${6**i}`});
+//立方1~10
+for(let i=1;i<=10;i++) pool.cube.push({q:`${i}的立方 = ?`, a:`${i**3}`});
+//平方1~29
+for(let i=1;i<=29;i++) pool.square.push({q:`${i}的平方 = ?`, a:`${i*i}`});
+
+// 合并所有题目数组
+const allGroups = [
+  pool.factor, pool.teenMult, pool.fraction,
+  pool.pow2, pool.pow3, pool.pow4, pool.pow5, pool.pow6,
+  pool.cube, pool.square
+];
+let fullBank = [];
+allGroups.forEach(g=> fullBank = fullBank.concat(g));
+
+// 工具函数
+function randomArr(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+function shuffle(arr){
+  let a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    let j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function formatNum(n){ return n.toFixed(2) }
+
+// 本地存储管理
+const STORE_KEY = "calcTrainData";
+function getStore(){
+  const s = localStorage.getItem(STORE_KEY);
+  return s ? JSON.parse(s) : {history:[], globalFast: null};
+}
+function saveStore(obj){
+  localStorage.setItem(STORE_KEY, JSON.stringify(obj));
+}
+
+// 页面DOM
+const $ = s=>document.querySelector(s);
+const qText = $("#qText");
+const ansInput = $("#ansInput");
+const submitBtn = $("#submit");
+const nextBtn = $("#next");
+const resetBtn = $("#reset");
+const tipMsg = $("#tipMsg");
+const currentNum = $("#currentNum");
+const totalTimeDom = $("#totalTime");
+const avgTimeDom = $("#avgTime");
+const singleTimeDom = $("#singleTime");
+const roundFastDom = $("#roundFast");
+const globalFastDom = $("#globalFast");
+const historyList = $("#historyList");
+
+// 全局状态
+let state = {
+  targetList: [], //本轮20题
+  idx: 0,
+  roundStart: null, //本轮开始时间
+  qStart: null, //当前题目开始时间
+  totalMs: 0,
+  roundFastMs: Infinity,
+  done: false,
+  currentQ: null
+};
+
+// 渲染历史、全局最快
+function renderStore(){
+  const data = getStore();
+  //全局最快
+  if(data.globalFast){
+    globalFastDom.textContent = formatNum(data.globalFast/1000);
+  }
+  //历史列表
+  historyList.innerHTML = "";
+  data.history.slice(-30).reverse().forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "history-item";
+    div.innerHTML = `
+      <span>${item.q}</span>
+      <span class="${item.ok?'correct':'wrong'}">
+        你的答案:${item.userAns} 正确:${item.ans} | ${formatNum(item.ms/1000)}s
+      </span>
+    `;
+    historyList.appendChild(div);
+  })
+}
+
+// 生成一轮20道不重复题目
+function genRound(){
+  state.targetList = shuffle(fullBank).slice(0,20);
+  state.idx = 0;
+  state.roundStart = Date.now();
+  state.totalMs = 0;
+  state.roundFastMs = Infinity;
+  state.done = false;
+  loadQuestion();
+}
+
+// 加载当前题号题目
+function loadQuestion(){
+  if(state.idx >=20){
+    state.done = true;
+    qText.textContent = "本轮20题全部完成！点击重置再来一轮";
+    ansInput.disabled = true;
+    submitBtn.disabled = true;
+    nextBtn.disabled = true;
+    return;
+  }
+  state.currentQ = state.targetList[state.idx];
+  qText.textContent = state.currentQ.q;
+  ansInput.value = "";
+  ansInput.disabled = false;
+  submitBtn.disabled = false;
+  nextBtn.disabled = true;
+  tipMsg.textContent = "";
+  state.qStart = Date.now();
+  currentNum.textContent = state.idx+1;
+  ansInput.focus();
+}
+
+// 提交答案
+function submitAns(){
+  if(state.done || !state.currentQ) return;
+  const userAns = ansInput.value.trim();
+  const rightAns = state.currentQ.a;
+  const costMs = Date.now() - state.qStart;
+  const costS = costMs / 1000;
+  singleTimeDom.textContent = formatNum(costS);
+
+  // 判断对错（宽松匹配，忽略空格）
+  const ok = userAns.replace(/\s/g,"") === rightAns.replace(/\s/g,"");
+  if(ok){
+    tipMsg.className = "tip correct";
+    tipMsg.textContent = `回答正确！用时${formatNum(costS)}秒`;
+    //更新本轮最快
+    if(costMs < state.roundFastMs) state.roundFastMs = costMs;
+    roundFastDom.textContent = formatNum(state.roundFastMs/1000);
+  }else{
+    tipMsg.className = "tip wrong";
+    tipMsg.textContent = `错误，正确答案：${rightAns}`;
+  }
+
+  // 计入总时间
+  state.totalMs += costMs;
+  const totalS = state.totalMs / 1000;
+  const avgS = totalS / (state.idx+1);
+  totalTimeDom.textContent = formatNum(totalS);
+  avgTimeDom.textContent = formatNum(avgS);
+
+  // 存入本地历史
+  const store = getStore();
+  store.history.push({
+    q: state.currentQ.q,
+    ans: rightAns,
+    userAns,
+    ok,
+    ms: costMs,
+    time: new Date().toLocaleString()
+  });
+  //更新全局最快
+  if(!store.globalFast || costMs < store.globalFast){
+    store.globalFast = costMs;
+  }
+  saveStore(store);
+  renderStore();
+
+  submitBtn.disabled = true;
+  nextBtn.disabled = false;
+}
+
+// 下一题
+function nextQ(){
+  state.idx++;
+  loadQuestion();
+}
+
+// 重置一轮
+function resetAll(){
+  genRound();
+  roundFastDom.textContent = "--";
+  totalTimeDom.textContent = "0.00";
+  avgTimeDom.textContent = "0.00";
+  singleTimeDom.textContent = "0.00";
+}
+
+// 绑定事件
+submitBtn.onclick = submitAns;
+nextBtn.onclick = nextQ;
+resetBtn.onclick = resetAll;
+ansInput.onkeydown = e=>{
+  if(e.key === "Enter") submitAns();
+}
+
+// 页面初始化
+renderStore();
+resetAll();
+</script>
+</body>
+</html>
