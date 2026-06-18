@@ -7,23 +7,18 @@
 * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont; }
 body { margin:0; background:#f5f7fa; color:#1f2937; }
 
-/* 顶部导航 */
 .tabs { display:flex; background:#1e293b; color:#fff; }
 .tab { flex:1; text-align:center; padding:14px 0; cursor:pointer; font-size:16px; }
 .tab.active { border-bottom:3px solid #38bdf8; color:#38bdf8; }
 
-/* 容器 */
 .container { max-width:460px; margin:auto; padding:16px; }
 
-/* 开始界面 */
 #startScreen { position:fixed; inset:0; background:linear-gradient(135deg,#4facfe,#00f2fe); color:#fff; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; }
 #startScreen h1 { font-size:42px; margin-bottom:30px; }
 #startBtn { font-size:22px; padding:16px 48px; border:none; border-radius:40px; background:#fff; color:#4facfe; cursor:pointer; font-weight:600; }
 
-/* 倒计时 */
 #countdown { position:fixed; inset:0; backdrop-filter: blur(20px); background:rgba(0,0,0,.35); color:#fff; font-size:90px; display:none; align-items:center; justify-content:center; z-index:20; }
 
-/* 练习区 */
 .stats { display:flex; justify-content:space-between; font-size:13px; margin-bottom:10px; }
 .progress { display:flex; gap:6px; justify-content:center; margin:10px 0; }
 .dot { width:10px;height:10px;border-radius:50%;background:#e5e7eb; }
@@ -31,30 +26,27 @@ body { margin:0; background:#f5f7fa; color:#1f2937; }
 .question { text-align:center; font-size:40px; font-weight:700; margin:20px 0; }
 .answer { text-align:center; font-size:32px; color:#2563eb; min-height:40px; }
 
-/* PC端输入框 */
-#pcInput {
-  width:100%; height:50px; font-size:24px; text-align:center;
-  border-radius:12px; border:2px solid #e5e7eb; outline:none;
-  display:none; /* 默认隐藏，JS根据屏幕决定显隐 */
-  margin-bottom:15px;
-}
+#pcInput { width:100%; height:50px; font-size:24px; text-align:center; border-radius:12px; border:2px solid #e5e7eb; outline:none; display:none; margin-bottom:15px; }
 
 .tip { text-align:center; min-height:24px; margin-top:8px; font-size:14px; }
 .tip.ok { color:#16a34a; }
 .tip.err { color:#dc2626; }
 
-/* 键盘 */
-.keyboard { display:none; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; } /* 默认隐藏 */
+.keyboard { display:none; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
 .key { height:56px; font-size:22px; border:none; border-radius:12px; background:#f3f4f6; cursor:pointer; }
 .key:active { background:#d1d5db; }
 .key.enter { background:#22c55e; color:#fff; }
 .key.clear { background:#fee2e2; color:#dc2626; }
 
-/* 结果卡片 */
 #resultCard { display:none; text-align:center; background:#fff; border-radius:16px; padding:24px; margin-top:20px; }
-#resultCard button { margin-top:16px; padding:12px 36px; border:none; border-radius:30px; background:#4facfe; color:#fff; font-size:16px; cursor:pointer; }
+#resultCard button { margin:8px; padding:12px 24px; border:none; border-radius:30px; background:#4facfe; color:#fff; font-size:16px; cursor:pointer; }
 
-/* 历史记录 */
+#answerCard { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50; align-items:center; justify-content:center; padding:20px; }
+#answerBox { background:#fff; border-radius:16px; padding:20px; max-height:80vh; overflow-y:auto; width:100%; max-width:420px; }
+#answerBox h3 { text-align:center; margin-bottom:12px; }
+.answerRow { font-size:14px; padding:6px 0; border-bottom:1px dashed #eee; }
+.answerRow span { float:right; color:#2563eb; }
+
 #historyPanel { display:none; background:#fff; padding:16px; border-radius:16px; margin-top:16px; }
 .day { margin-bottom:16px; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; }
 .dayHeader { background:#f9fafb; padding:12px 16px; cursor:pointer; display:flex; justify-content:space-between; font-weight:600; }
@@ -79,14 +71,9 @@ body { margin:0; background:#f5f7fa; color:#1f2937; }
   <div class="stats"><span>进度: <b id="idx">0</b>/<b id="total">0</b></span><span>总耗时: <b id="time">0</b>s</span><span>最快: <b id="best">--</b>s</span></div>
   <div class="progress" id="bar"></div>
   <div class="question" id="q">准备开始</div>
-  
-  <!-- PC端输入框 -->
-  <input type="text" id="pcInput" placeholder="PC端请直接在此输入...">
-
+  <input type="text" id="pcInput">
   <div class="answer" id="a"></div>
   <div class="tip" id="tip"></div>
-  
-  <!-- 手机端键盘 -->
   <div class="keyboard" id="mobileKeyboard">
     <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
     <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
@@ -97,173 +84,195 @@ body { margin:0; background:#f5f7fa; color:#1f2937; }
   </div>
 </div>
 
-<div id="resultCard" class="container"><h2 id="resultTitle"></h2><p id="resultText"></p><button onclick="restart()">再来一次</button></div>
-<div id="historyPanel" class="container"><div id="bestTag">🏅 历史最佳平均速度：--</div><div id="historyList"></div></div>
+<div id="resultCard" class="container">
+  <h2 id="resultTitle"></h2>
+  <p id="resultText"></p>
+  <button onclick="restart()">再来一次</button>
+  <button onclick="showAnswers()">查看全部答案</button>
+</div>
+
+<div id="answerCard" onclick="this.style.display='none'">
+  <div id="answerBox" onclick="event.stopPropagation()">
+    <h3>本次练习答案</h3>
+    <div id="answerList"></div>
+  </div>
+</div>
+
+<div id="historyPanel" class="container">
+  <div id="bestTag">🏅 历史最佳平均速度：--</div>
+  <div id="historyList"></div>
+</div>
 
 <script>
 const COUNT = 20;
-const STORAGE_KEY = "OMP_HISTORY_V4";
-let state = { list:[], idx:0, start:0, totalMs:0, bestMs:Infinity, currentExpr:'' };
-
-/* ===== 设备判断 ===== */
-function isMobile() {
-  return window.innerWidth <= 768; // 简单判断，宽度小于768认为是手机
-}
+const STORAGE_KEY = "OMP_HISTORY_V6";
+let state = { list:[], idx:0, start:0, totalMs:0, bestMs:Infinity, currentExpr:'', lastAnswers:[] };
+let isCounting = false;
 
 /* ===== 题库 ===== */
 function generateBank() {
   const bank = [];
-  [1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800].forEach((v, i) => bank.push({ q: `${i + 1}! = ?`, a: v }));
-  for (let i = 1; i <= 30; i++) bank.push({ q: `${i}² = ?`, a: i * i });
-  const fractions = [["1/2","0.5"],["1/4","0.25"],["3/4","0.75"],["1/8","0.125"],["3/8","0.375"]];
-  fractions.forEach(f => { for(let i=0;i<3;i++) bank.push({q:f[0]+'=?', a:parseFloat(f[1])}); });
-  for (let a = 11; a <= 19; a++) for (let b = 1; b <= 9; b++) bank.push({ q: `${a*b} = ? × ?`, a: `${a}×${b}` });
+
+  // 阶乘
+  [1,2,6,24,120,720,5040,40320,362880,3628800].forEach((v,i)=>bank.push({q:`${i+1}! = ?`, a:v}));
+
+  // 平方
+  for(let i=1;i<=30;i++) bank.push({q:`${i}² = ?`, a:i*i});
+
+  // 分数（高权重）
+  [["1/2","0.5"],["1/4","0.25"],["3/4","0.75"],["1/8","0.125"],["3/8","0.375"]].forEach(f=>{
+    for(let i=0;i<3;i++) bank.push({q:f[0]+'=?', a:parseFloat(f[1])});
+  });
+
+  // 11~19 × 1~9（格式：乘积 = 已知 × ?）
+  for(let a=11;a<=19;a++){
+    for(let b=1;b<=9;b++){
+      if(Math.random()>0.5){
+        bank.push({q:`${a*b} = ${a} × ?`, a:b});
+      }else{
+        bank.push({q:`${a*b} = ? × ${b}`, a:a});
+      }
+    }
+  }
+
+  // 特殊乘积
+  [[221,17,13],[247,19,13],[323,19,17],[10,5,2],[100,25,4],[500,125,4],[2500,625,4],[1000,125,8]].forEach(([p,x,y])=>{
+    if(Math.random()>0.5){
+      bank.push({q:`${p} = ${x} × ?`, a:y});
+    }else{
+      bank.push({q:`${p} = ? × ${y}`, a:x});
+    }
+  });
+
   return bank;
 }
 
-/* ===== 界面控制 ===== */
-function adjustUIForDevice() {
-  const pcInput = document.getElementById('pcInput');
-  const mobileKeyboard = document.getElementById('mobileKeyboard');
-  
-  if (isMobile()) {
-    // 手机端：隐藏输入框，显示虚拟键盘
-    pcInput.style.display = 'none';
-    mobileKeyboard.style.display = 'grid';
-  } else {
-    // PC端：显示输入框，隐藏虚拟键盘
-    pcInput.style.display = 'block';
-    mobileKeyboard.style.display = 'none';
-    pcInput.focus(); // 自动聚焦，方便直接打字
+/* ===== UI ===== */
+function isMobile(){ return window.innerWidth<=768; }
+function adjustUI(){
+  isMobile()?(pcInput.style.display='none', mobileKeyboard.style.display='grid')
+             :(pcInput.style.display='block', mobileKeyboard.style.display='none', pcInput.focus());
+}
+
+function renderProgress(){
+  bar.innerHTML='';
+  for(let i=0;i<COUNT;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i<state.idx?'done':'');
+    bar.appendChild(d);
   }
 }
 
 /* ===== 练习流程 ===== */
-function startPracticeFlow() {
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('practice').style.display = 'block';
-  document.getElementById('resultCard').style.display = 'none';
-  document.getElementById('historyPanel').style.display = 'block';
-  
-  adjustUIForDevice(); // 调整键盘显示
-
-  let count = 3;
-  const cd = document.getElementById('countdown');
-  cd.style.display = 'flex';
-  cd.innerText = count;
-  const timer = setInterval(() => {
-    count--;
-    if (count === 0) { clearInterval(timer); cd.style.display = 'none'; startNewRound(); }
-    cd.innerText = count;
-  }, 1000);
+function startPracticeFlow(){
+  if(isCounting) return; isCounting=true;
+  startScreen.style.display='none'; practice.style.display='block';
+  resultCard.style.display='none'; historyPanel.style.display='block';
+  adjustUI();
+  let c=3, cd=countdown; cd.style.display='flex'; cd.innerText=c;
+  const t=setInterval(()=>{
+    c--;
+    if(c===0){ clearInterval(t); cd.style.display='none'; isCounting=false; startNewRound(); }
+    cd.innerText=c;
+  },1000);
 }
 
-function startNewRound() {
-  state.list = generateBank().sort(() => 0.5 - Math.random()).slice(0, COUNT);
-  state.idx = 0; state.totalMs = 0; state.bestMs = Infinity; state.currentExpr = '';
+function startNewRound(){
+  state.list=generateBank().sort(()=>0.5-Math.random()).slice(0,COUNT);
+  state.idx=0; state.totalMs=0; state.bestMs=Infinity; state.lastAnswers=[];
   loadQuestion();
 }
 
-function loadQuestion() {
-  if (state.idx >= COUNT) { finishPractice(); return; }
-  document.getElementById('idx').innerText = state.idx + 1;
-  document.getElementById('total').innerText = COUNT;
-  document.getElementById('q').innerText = state.list[state.idx].q;
-  document.getElementById('a').innerText = '';
-  document.getElementById('tip').innerText = '';
-  document.getElementById('pcInput').value = ''; // 清空PC输入框
-  state.start = Date.now();
-  renderProgress();
-  if(!isMobile()) document.getElementById('pcInput').focus(); // PC端保持焦点
+function loadQuestion(){
+  if(state.idx>=COUNT){ finishPractice(); return; }
+  idx.innerText=state.idx+1; total.innerText=COUNT;
+  q.innerText=state.list[state.idx].q;
+  a.innerText=''; tip.innerText=''; pcInput.value='';
+  state.start=Date.now(); renderProgress();
+  if(!isMobile()) pcInput.focus();
 }
 
-function checkAnswer(answerStr) {
-  if (!answerStr) return;
-  const cost = Date.now() - state.start;
-  const correctAnswer = state.list[state.idx].a;
-  const userAnswer = eval(answerStr.replace('×','*'));
-  const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.01;
+function checkAnswer(ans){
+  if(!ans) return;
+  const cost=Date.now()-state.start;
+  const correct=state.list[state.idx].a;
+  const user=eval(ans.replace('×','*'));
+  const ok=Math.abs(user-correct)<0.01;
 
-  state.totalMs += cost;
-  if (cost < state.bestMs) state.bestMs = cost;
+  state.totalMs+=cost;
+  if(cost<state.bestMs) state.bestMs=cost;
 
-  document.getElementById('time').innerText = (state.totalMs / 1000).toFixed(1);
-  document.getElementById('best').innerText = (state.bestMs / 1000).toFixed(1);
+  time.innerText=(state.totalMs/1000).toFixed(1);
+  best.innerText=(state.bestMs/1000).toFixed(1);
 
-  const tip = document.getElementById('tip');
-  tip.className = isCorrect ? 'tip ok' : 'tip err';
-  tip.innerText = isCorrect ? '✅ 正确' : `❌ 错误 答案：${correctAnswer}`;
+  tip.className=ok?'tip ok':'tip err';
+  tip.innerText=ok?'✅ 正确':`❌ 错误 答案：${correct}`;
 
-  saveHistory(isCorrect, cost);
+  state.lastAnswers.push({q:state.list[state.idx].q, a:correct});
+  saveHistory(ok,cost);
   state.idx++;
-  setTimeout(loadQuestion, isCorrect ? 600 : 1000);
+  setTimeout(loadQuestion, ok?600:1000);
 }
 
-function finishPractice() {
-  document.getElementById('practice').style.display = 'none';
-  document.getElementById('resultCard').style.display = 'block';
-  document.getElementById('resultTitle').innerText = '🎉 练习完成';
-  document.getElementById('resultText').innerText = `总用时 ${(state.totalMs/1000).toFixed(1)}s | 最快单题 ${(state.bestMs/1000).toFixed(1)}s`;
+function finishPractice(){
+  practice.style.display='none';
+  resultCard.style.display='block';
+  resultTitle.innerText='🎉 练习完成';
+  resultText.innerText=`总用时 ${(state.totalMs/1000).toFixed(1)}s | 最快 ${(state.bestMs/1000).toFixed(1)}s`;
   showHistory();
 }
 
-/* ===== 历史记录 ===== */
-function saveHistory(isCorrect, ms) {
-  const db = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  db.push({ q: state.list[state.idx].q, user: state.currentExpr, ok: isCorrect, ms: ms, date: new Date().toLocaleDateString('zh-CN') });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db.slice(-200)));
-  setTimeout(showHistory, 300);
-}
-
-function showHistory() {
-  const db = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  const groups = {};
-  db.forEach(r => (groups[r.date] = groups[r.date] || []).push(r));
-  let bestAvg = Infinity, html = '';
-  Object.keys(groups).reverse().forEach(date => {
-    const dayRecords = groups[date];
-    const avgMs = dayRecords.reduce((s, r) => s + r.ms, 0) / dayRecords.length;
-    if (avgMs < bestAvg) bestAvg = avgMs;
-    html += `<div class="day"><div class="dayHeader" onclick="toggleDay(this)"><span>${date} (${dayRecords.length}题)</span><span>平均 ${(avgMs/1000).toFixed(1)}s</span></div><div class="dayBody">`;
-    dayRecords.reverse().forEach(r => html += `<div class="item ${r.ok?'ok':'err'}">${r.q} → ${r.user} (${r.ms/1000}s)</div>`);
-    html += `</div></div>`;
+/* ===== 答案卡片 ===== */
+function showAnswers(){
+  let html='';
+  state.lastAnswers.forEach((x,i)=>{
+    html+=`<div class="answerRow">${i+1}. ${x.q} <span>${x.a}</span></div>`;
   });
-  document.getElementById('historyList').innerHTML = html;
-  document.getElementById('bestTag').innerText = `🏅 历史最佳平均速度：${bestAvg === Infinity ? '--' : (bestAvg/1000).toFixed(2)+'s'}`;
+  answerList.innerHTML=html;
+  answerCard.style.display='flex';
 }
 
-function toggleDay(header) { const body = header.nextElementSibling; body.style.display = body.style.display === 'block' ? 'none' : 'block'; }
-function restart() {
-  document.getElementById('resultCard').style.display = 'none';
-  startPracticeFlow(); // ✅ 重新走倒计时
+/* ===== 历史 ===== */
+function saveHistory(ok,ms){
+  const db=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  db.push({q:state.list[state.idx-1].q, user:state.currentExpr, ok, ms, date:new Date().toLocaleDateString('zh-CN')});
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(db.slice(-200)));
+  setTimeout(showHistory,300);
 }
-/* ===== 输入处理 ===== */
-document.getElementById('startBtn').onclick = startPracticeFlow;
 
-// 手机端点击
-document.querySelectorAll('.key[data-k]').forEach(k => k.onclick = e => {
-  state.currentExpr += e.target.dataset.k;
-  document.getElementById('a').innerText = state.currentExpr;
+function showHistory(){
+  const db=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  const g={}; db.forEach(r=>(g[r.date]=g[r.date]||[]).push(r));
+  let best=Infinity,html='';
+  Object.keys(g).reverse().forEach(d=>{
+    const avg=g[d].reduce((s,r)=>s+r.ms,0)/g[d].length;
+    if(avg<best) best=avg;
+    html+=`<div class="day"><div class="dayHeader" onclick="toggleDay(this)"><span>${d}（${g[d].length}题）</span><span>平均 ${(avg/1000).toFixed(1)}s</span></div><div class="dayBody">`+
+      g[d].reverse().map(r=>`<div class="item ${r.ok?'ok':'err'}">${r.q} → ${r.user}（${r.ms/1000}s）</div>`).join('')+
+      `</div></div>`;
+  });
+  historyList.innerHTML=html;
+  bestTag.innerText=`🏅 历史最佳平均速度：${best===Infinity?'--':(best/1000).toFixed(2)+'s'}`;
+}
+
+function toggleDay(h){ const b=h.nextElementSibling; b.style.display=b.style.display==='block'?'none':'block'; }
+function restart(){ resultCard.style.display='none'; startPracticeFlow(); }
+
+/* ===== 输入 ===== */
+document.getElementById('startBtn').onclick=startPracticeFlow;
+document.querySelectorAll('.key[data-k]').forEach(k=>k.onclick=e=>{
+  state.currentExpr+=e.target.dataset.k; a.innerText=state.currentExpr;
 });
-document.getElementById('clr').onclick = () => { state.currentExpr = ''; document.getElementById('a').innerText = ''; };
-document.getElementById('ok').onclick = () => checkAnswer(state.currentExpr);
+clr.onclick=()=>{state.currentExpr='';a.innerText='';pcInput.value='';};
+ok.onclick=()=>checkAnswer(state.currentExpr);
+pcInput.onkeydown=e=>{if(e.key==='Enter'){state.currentExpr=pcInput.value;checkAnswer(state.currentExpr);pcInput.value='';}};
 
-// PC端键盘
-document.getElementById('pcInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
-    state.currentExpr = this.value;
-    checkAnswer(state.currentExpr);
-    this.value = '';
-  }
-});
-
-// Tab切换
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
-  document.getElementById('practice').style.display = tab === 'practice' ? 'block' : 'none';
-  document.getElementById('historyPanel').style.display = tab === 'history' ? 'block' : 'none';
-  if(tab === 'history') showHistory();
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${t}"]`).classList.add('active');
+  practice.style.display=t==='practice'?'block':'none';
+  historyPanel.style.display=t==='history'?'block':'none';
+  if(t==='history') showHistory();
 }
 
 showHistory();
