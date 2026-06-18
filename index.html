@@ -6,49 +6,36 @@
 <style>
 * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont; }
 body { margin:0; background:#f5f7fa; color:#1f2937; }
-
 .tabs { display:flex; background:#1e293b; color:#fff; }
 .tab { flex:1; text-align:center; padding:14px 0; cursor:pointer; font-size:16px; }
 .tab.active { border-bottom:3px solid #38bdf8; color:#38bdf8; }
-
 .container { max-width:460px; margin:auto; padding:16px; }
-
 #startScreen { position:fixed; inset:0; background:linear-gradient(135deg,#4facfe,#00f2fe); color:#fff; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; }
 #startScreen h1 { font-size:42px; margin-bottom:30px; }
 #startBtn { font-size:22px; padding:16px 48px; border:none; border-radius:40px; background:#fff; color:#4facfe; cursor:pointer; font-weight:600; }
-
 #countdown { position:fixed; inset:0; backdrop-filter: blur(20px); background:rgba(0,0,0,.35); color:#fff; font-size:90px; display:none; align-items:center; justify-content:center; z-index:20; }
-
 .stats { display:flex; justify-content:space-between; font-size:13px; margin-bottom:10px; }
 .progress { display:flex; gap:6px; justify-content:center; margin:10px 0; }
 .dot { width:10px;height:10px;border-radius:50%;background:#e5e7eb; }
 .dot.done { background:#22c55e; }
 .question { text-align:center; font-size:40px; font-weight:700; margin:20px 0; }
 .answer { text-align:center; font-size:32px; color:#2563eb; min-height:40px; }
-
 #pcInput { width:100%; height:50px; font-size:24px; text-align:center; border-radius:12px; border:2px solid #e5e7eb; outline:none; display:none; margin-bottom:15px; }
-
 .tip { text-align:center; min-height:24px; margin-top:8px; font-size:14px; }
 .tip.ok { color:#16a34a; }
 .tip.err { color:#dc2626; }
-
 .keyboard { display:none; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
 .key { height:56px; font-size:22px; border:none; border-radius:12px; background:#f3f4f6; cursor:pointer; }
 .key:active { background:#d1d5db; }
 .key.enter { background:#22c55e; color:#fff; }
 .key.clear { background:#fee2e2; color:#dc2626; }
-
 #resultCard { display:none; text-align:center; background:#fff; border-radius:16px; padding:24px; margin-top:20px; }
 #resultCard button { margin:8px; padding:12px 24px; border:none; border-radius:30px; background:#4facfe; color:#fff; font-size:16px; cursor:pointer; }
-
-/* 答案卡片（原有） */
 #answerCard { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50; align-items:center; justify-content:center; padding:20px; }
 #answerBox { background:#fff; border-radius:16px; padding:20px; max-height:80vh; overflow-y:auto; width:100%; max-width:420px; }
 #answerBox h3 { text-align:center; margin-bottom:12px; }
 .answerRow { font-size:14px; padding:6px 0; border-bottom:1px dashed #eee; }
 .answerRow span { float:right; color:#2563eb; }
-
-/* ✅ 答案表卡片（新增） */
 #tableCard { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50; align-items:center; justify-content:center; padding:20px; }
 #tableBox { background:#fff; border-radius:16px; padding:20px; max-height:85vh; overflow:auto; width:100%; max-width:440px; }
 #tableBox h3 { text-align:center; margin-bottom:12px; }
@@ -56,7 +43,6 @@ table { width:100%; border-collapse: collapse; font-size:13px; }
 th, td { border:1px solid #e5e7eb; padding:6px 8px; text-align:center; }
 th { background:#f8fafc; font-weight:600; }
 tr:nth-child(even) { background:#f9fafb; }
-
 #historyPanel { display:none; background:#fff; padding:16px; border-radius:16px; margin-top:16px; }
 .day { margin-bottom:16px; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; }
 .dayHeader { background:#f9fafb; padding:12px 16px; cursor:pointer; display:flex; justify-content:space-between; font-weight:600; }
@@ -102,7 +88,6 @@ tr:nth-child(even) { background:#f9fafb; }
   <button onclick="showTable()">查看答案表</button>
 </div>
 
-<!-- 答案卡片 -->
 <div id="answerCard" onclick="this.style.display='none'">
   <div id="answerBox" onclick="event.stopPropagation()">
     <h3>本次练习答案</h3>
@@ -110,7 +95,6 @@ tr:nth-child(even) { background:#f9fafb; }
   </div>
 </div>
 
-<!-- ✅ 答案表卡片（新增） -->
 <div id="tableCard" onclick="this.style.display='none'">
   <div id="tableBox" onclick="event.stopPropagation()">
     <h3>11~19 乘法答案表</h3>
@@ -129,7 +113,6 @@ const STORAGE_KEY = "OMP_HISTORY_V7";
 let state = { list:[], idx:0, start:0, totalMs:0, bestMs:Infinity, currentExpr:'', lastAnswers:[] };
 let isCounting = false;
 
-/* ===== 题库 ===== */
 function generateBank() {
   const b = [];
   [1,2,6,24,120,720,5040,40320,362880,3628800].forEach((v,i)=>b.push({q:`${i+1}! = ?`, a:v}));
@@ -142,6 +125,7 @@ function generateBank() {
 
 function isMobile(){ return window.innerWidth<=768; }
 function adjustUI(){ isMobile()?(pcInput.style.display='none', mobileKeyboard.style.display='grid'):(pcInput.style.display='block', mobileKeyboard.style.display='none', pcInput.focus()); }
+function renderProgress(){ bar.innerHTML=''; for(let i=0;i<COUNT;i++){ const d=document.createElement('div'); d.className='dot'+(i<state.idx?'done':''); bar.appendChild(d); } }
 
 function startPracticeFlow(){
   if(isCounting) return; isCounting=true;
@@ -149,7 +133,7 @@ function startPracticeFlow(){
   resultCard.style.display='none'; historyPanel.style.display='block';
   adjustUI();
   let c=3, cd=countdown; cd.style.display='flex'; cd.innerText=c;
-  const t=setInterval(()=>{c--;if(c===0){clearInterval(t);cd.style.display='none';isCounting=false;startNewRound();}cd.innerText=c;},1000);
+  const t=setInterval(()=>{ c--; if(c===0){ clearInterval(t); cd.style.display='none'; isCounting=false; startNewRound(); } cd.innerText=c; },1000);
 }
 
 function startNewRound(){
@@ -161,7 +145,8 @@ function startNewRound(){
 function loadQuestion(){
   if(state.idx>=COUNT){ finishPractice(); return; }
   idx.innerText=state.idx+1; total.innerText=COUNT;
-  q.innerText=state.list[state.idx].q; a.innerText=''; tip.innerText=''; pcInput.value='';
+  q.innerText=state.list[state.idx].q;
+  a.innerText=''; tip.innerText=''; pcInput.value='';
   state.start=Date.now(); renderProgress();
   if(!isMobile()) pcInput.focus();
 }
@@ -192,7 +177,6 @@ function finishPractice(){
   showHistory();
 }
 
-/* ===== 答案卡片 ===== */
 function showAnswers(){
   let html='';
   state.lastAnswers.forEach((x,i)=>{html+=`<div class="answerRow">${i+1}. ${x.q} <span>${x.a}</span></div>`;});
@@ -200,22 +184,16 @@ function showAnswers(){
   answerCard.style.display='flex';
 }
 
-/* ✅ 答案表（新增） ===== */
 function showTable(){
   let html='<table><tr><th>×</th>';
   for(let j=1;j<=9;j++) html+=`<th>${j}</th>`;
   html+='</tr>';
-  for(let i=11;i<=19;i++){
-    html+=`<tr><th>${i}</th>`;
-    for(let j=1;j<=9;j++) html+=`<td>${i*j}</td>`;
-    html+='</tr>';
-  }
+  for(let i=11;i<=19;i++){ html+=`<tr><th>${i}</th>`; for(let j=1;j<=9;j++) html+=`<td>${i*j}</td>`; html+='</tr>'; }
   html+='</table>';
   tableContent.innerHTML=html;
   tableCard.style.display='flex';
 }
 
-/* ===== 历史 ===== */
 function saveHistory(ok,ms){
   const db=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
   db.push({q:state.list[state.idx-1].q, user:state.currentExpr, ok, ms, date:new Date().toLocaleDateString('zh-CN')});
@@ -254,7 +232,6 @@ function switchTab(t){
   historyPanel.style.display=t==='history'?'block':'none';
   if(t==='history') showHistory();
 }
-
 showHistory();
 </script>
 </body>
