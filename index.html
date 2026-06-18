@@ -2,53 +2,89 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>口算练习</title>
+<title>全能口算练习</title>
+
 <style>
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
+}
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f6f7f9;
+  background: #f5f5f5;
   padding: 16px;
-  max-width: 440px;
+  max-width: 480px;
   margin: auto;
 }
-.card {
+.container {
   background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
 }
-.title {
+h1 {
   text-align: center;
-  font-size: 24px;
-  font-weight: 600;
   margin-bottom: 14px;
 }
-.stat {
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 14px;
+}
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+.tab.active {
+  border-bottom: 3px solid #3498db;
+  color: #3498db;
+  font-weight: bold;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.stats {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   margin-bottom: 10px;
 }
+.progress {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 10px 0;
+}
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #e5e7eb;
+}
+.dot.done { background: #22c55e; }
+
 .question {
   text-align: center;
-  font-size: 38px;
+  font-size: 36px;
   font-weight: bold;
   margin: 18px 0;
 }
 .answer {
   text-align: center;
-  font-size: 30px;
-  min-height: 40px;
+  font-size: 28px;
+  min-height: 38px;
   color: #2563eb;
 }
 .tip {
   text-align: center;
   min-height: 24px;
-  margin-top: 8px;
   font-size: 14px;
 }
 .tip.ok { color: #16a34a; }
 .tip.err { color: #dc2626; }
+
 .keyboard {
   display: grid;
   grid-template-columns: repeat(3,1fr);
@@ -56,7 +92,7 @@ body {
   margin-top: 14px;
 }
 .key {
-  height: 56px;
+  height: 54px;
   font-size: 22px;
   border-radius: 12px;
   border: none;
@@ -66,22 +102,11 @@ body {
 .key:active { background: #d1d5db; }
 .key.enter { background: #22c55e; color: #fff; }
 .key.clear { background: #fee2e2; color: #dc2626; }
-.progress {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  margin: 12px 0;
-}
-.dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: #e5e7eb;
-}
-.dot.done { background: #22c55e; }
+
 .history {
-  margin-top: 16px;
+  margin-top: 14px;
   font-size: 13px;
-  max-height: 200px;
+  max-height: 220px;
   overflow-y: auto;
 }
 .item { margin-bottom: 6px; }
@@ -89,12 +114,21 @@ body {
 .err { color: #dc2626; }
 </style>
 </head>
+
 <body>
+<div class="container">
 
-<div class="card">
-  <div class="title">全能口算</div>
+<h1>全能口算</h1>
 
-  <div class="stat">
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-tab="practice">练习</button>
+  <button class="tab" data-tab="history">历史记录</button>
+</div>
+
+<!-- 练习 -->
+<div id="practice" class="tab-content active">
+  <div class="stats">
     <span>进度：<b id="idx">0/20</b></span>
     <span>总耗时：<b id="total">0.00</b>s</span>
     <span>最快：<b id="best">--</b>s</span>
@@ -122,185 +156,140 @@ body {
     <button class="key clear" id="clr">清除</button>
     <button class="key enter" id="ok">确定</button>
   </div>
+
+  <button id="startBtn" style="width:100%;margin-top:14px;">开始练习</button>
 </div>
 
-<div class="card" style="text-align:center;">
-  <button id="startBtn">
-    开始练习
-  </button>
+<!-- 历史 -->
+<div id="history" class="tab-content">
+  <div class="history" id="his"></div>
+  <button id="clearHis" style="width:100%;margin-top:10px;">清除历史</button>
 </div>
 
-<div class="card history" id="his"></div>
+</div>
 
 <script>
 const COUNT = 20, KEY = "calcDB";
 let state = {
-  list: [], idx: 0,
-  start: 0, total: 0, best: Infinity,
-  expr: ""
+  list:[], idx:0, start:0, total:0, best:Infinity, expr:""
 };
 
 function bank() {
   const b = [];
+  for (let a=11;a<=19;a++) for (let b_=1;b_<=9;b_++)
+    b.push({ q:`${a*b_} = ? × ?`, a:`${a}×${b_}` });
 
-  // 乘积 = ? × ?
-  for (let a = 11; a <= 19; a++)
-    for (let b_ = 1; b_ <= 9; b_++)
-      b.push({ q: `${a*b_} = ? × ?`, a: `${a}×${b_}` });
+  [221,247,323,10,100,500,2500,1000].forEach(v=>{
+    b.push({ q:`${v} = ? × ?`, a:"?" });
+  });
 
-  b.push({ q: "221 = ? × ?", a: "17×13" });
-  b.push({ q: "247 = ? × ?", a: "19×13" });
-  b.push({ q: "323 = ? × ?", a: "19×17" });
+  for (let i=1;i<=29;i++) b.push({ q:`${i}² = ?`, a:String(i*i) });
+  for (let i=1;i<=10;i++) b.push({ q:`${i}³ = ?`, a:String(i*i*i) });
 
-  b.push({ q: "10 = ? × ?", a: "5×2" });
-  b.push({ q: "100 = ? × ?", a: "25×4" });
-  b.push({ q: "500 = ? × ?", a: "125×4" });
-  b.push({ q: "2500 = ? × ?", a: "625×4" });
-  b.push({ q: "1000 = ? × ?", a: "125×8" });
+  [[1/2,0.5],[1/3,0.33],[1/4,0.25],[1/8,0.125]].forEach(([q,a])=>
+    b.push({ q:`${q} = ?`, a:String(a) })
+  );
 
-  // 平方
-  for (let i = 1; i <= 29; i++)
-    b.push({ q: `${i}² = ?`, a: String(i*i) });
-
-  // 立方
-  for (let i = 1; i <= 10; i++)
-    b.push({ q: `${i}³ = ?`, a: String(i*i*i) });
-
-  // 分数
-  const f = [
-    ["1/2","0.5"],["1/3","0.33"],["1/4","0.25"],
-    ["1/6","0.17"],["1/8","0.125"],
-    ["2/3","0.67"],["3/4","0.75"],
-    ["3/8","0.375"],["5/6","0.83"],
-    ["7/8","0.875"],["5/8","0.625"]
-  ];
-  f.forEach(([q,a])=>b.push({ q: `${q} = ?`, a }));
-
-  // 指数
-  for (let i = 1; i <= 10; i++) b.push({ q: `2^${i} = ?`, a: String(2**i) });
-  for (let i = 1; i <= 6; i++) b.push({ q: `3^${i} = ?`, a: String(3**i) });
-  for (let i = 1; i <= 5; i++) b.push({ q: `4^${i} = ?`, a: String(4**i) });
-  for (let i = 1; i <= 5; i++) b.push({ q: `5^${i} = ?`, a: String(5**i) });
-  for (let i = 1; i <= 4; i++) b.push({ q: `6^${i} = ?`, a: String(6**i) });
-
-  // 阶乘
+  for (let i=1;i<=10;i++) b.push({ q:`2^${i} = ?`, a:String(2**i) });
   [1,2,6,24,120,720,5040,40320,362880,3628800]
-    .forEach((v,i)=>b.push({ q: `${i+1}! = ?`, a: String(v) }));
+    .forEach((v,i)=>b.push({ q:`${i+1}! = ?`, a:String(v) }));
 
   return b;
 }
 
-function shuffle(a) {
-  return a.sort(() => Math.random() - 0.5);
-}
+function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
 
-function newRound() {
-  state.list = shuffle(bank()).slice(0, COUNT);
-  state.idx = 0;
-  state.total = 0;
-  state.best = Infinity;
-  state.expr = "";
+function newRound(){
+  state.list = shuffle(bank()).slice(0,COUNT);
+  state.idx=0; state.total=0; state.best=Infinity; state.expr="";
   load();
 }
 
-function load() {
+function load(){
   renderBar();
   document.getElementById("idx").innerText = (state.idx+1)+"/"+COUNT;
   document.getElementById("ans").innerText = "";
   document.getElementById("tip").innerText = "";
-  if (state.idx >= COUNT) {
-    document.getElementById("q").innerText = "🎉 完成！";
+
+  if(state.idx>=COUNT){
+    document.getElementById("q").innerText="🎉 完成！";
     return;
   }
   state.start = Date.now();
   document.getElementById("q").innerText = state.list[state.idx].q;
 }
 
-function input(k) {
-  if (k === "*") k = "×";
-  state.expr += k;
+function input(k){
+  if(k==="*") k="×";
+  state.expr+=k;
   document.getElementById("ans").innerText = state.expr;
 }
+function clearAns(){ state.expr=""; document.getElementById("ans").innerText=""; }
 
-function clearAns() {
-  state.expr = "";
-  document.getElementById("ans").innerText = "";
-}
-
-function submit() {
-  if (!state.expr) return;
-  const cost = Date.now() - state.start;
-  const correct = state.list[state.idx].a;
-  const ok =
-    Math.abs(
-      eval(state.expr.replace(/×/g,"*")) -
-      eval(correct.replace(/×/g,"*"))
-    ) < 0.01;
+function submit(){
+  if(!state.expr) return;
+  const cost = Date.now()-state.start;
+  const ok = Math.abs(
+    eval(state.expr.replace(/×/g,"*")) -
+    eval(state.list[state.idx].a.replace(/×/g,"*"))
+  ) < 0.01;
 
   state.total += cost;
-  if (cost < state.best) state.best = cost;
+  if(cost < state.best) state.best = cost;
 
   document.getElementById("total").innerText = (state.total/1000).toFixed(2);
   document.getElementById("best").innerText = (state.best/1000).toFixed(2);
 
   const tip = document.getElementById("tip");
   tip.className = ok ? "tip ok" : "tip err";
-  tip.innerText = ok ? "正确 ✅" : "错误 ❌ 答案：" + correct;
+  tip.innerText = ok ? "正确 ✅" : "错误 ❌ 答案：" + state.list[state.idx].a;
 
-  save(correct, ok, cost);
-  state.idx++;
-  state.expr = "";
+  save(ok,cost);
+  state.idx++; state.expr="";
   setTimeout(load, 900);
 }
 
-function renderBar() {
-  const bar = document.getElementById("bar");
-  bar.innerHTML = "";
-  for (let i = 0; i < COUNT; i++) {
-    const d = document.createElement("div");
-    d.className = "dot" + (i < state.idx ? " done" : "");
+function renderBar(){
+  const bar=document.getElementById("bar"); bar.innerHTML="";
+  for(let i=0;i<COUNT;i++){
+    const d=document.createElement("div");
+    d.className="dot"+(i<state.idx?" done":"");
     bar.appendChild(d);
   }
 }
 
-function save(q, ok, ms) {
-  const db = JSON.parse(localStorage.getItem(KEY) || "[]");
-  db.push({ q, user: state.expr, ok, ms });
-  localStorage.setItem(KEY, JSON.stringify(db.slice(-50)));
+function save(ok,ms){
+  const db=JSON.parse(localStorage.getItem(KEY)||"[]");
+  db.push({ q:state.list[state.idx-1].q, user:state.expr, ok, ms });
+  localStorage.setItem(KEY,JSON.stringify(db.slice(-50)));
   showHis();
 }
 
-function showHis() {
-  const db = JSON.parse(localStorage.getItem(KEY) || "[]");
+function showHis(){
+  const db=JSON.parse(localStorage.getItem(KEY)||"[]");
   document.getElementById("his").innerHTML =
-    "<b>历史记录</b><br>" +
-    db.reverse().map(h =>
-      `<div class="item ${h.ok?'ok':'err'}">
-        ${h.q} → ${h.user} (${h.ms/1000}s)
-      </div>`
-    ).join("");
+    db.reverse().map(h=>`<div class="item ${h.ok?'ok':'err'}">
+      ${h.q} → ${h.user} (${h.ms/1000}s)</div>`).join("");
 }
 
-document.querySelectorAll(".key[data-k]")
-  .forEach(b => b.onclick = e => input(e.target.dataset.k));
-document.getElementById("clr").onclick = clearAns;
-document.getElementById("ok").onclick = submit;
-
-document.addEventListener("keydown", e => {
-  if (e.key >= 0 && e.key <= 9) input(e.key);
-  if (e.key === "*") input("*");
-  if (e.key === ".") input(".");
-  if (e.key === "^") input("^");
-  if (e.key === "Enter") submit();
-  if (e.key === "Backspace") clearAns();
-});
-
-/* ===== 开始按钮 ===== */
-document.getElementById("startBtn").onclick = () => {
-  newRound();
+document.querySelectorAll(".key[data-k]").forEach(b=>b.onclick=e=>input(e.target.dataset.k));
+document.getElementById("clr").onclick=clearAns;
+document.getElementById("ok").onclick=submit;
+document.getElementById("startBtn").onclick=newRound;
+document.getElementById("clearHis").onclick=()=>{
+  localStorage.removeItem(KEY); showHis();
 };
-
 showHis();
+
+/* Tab 切换 */
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+    document.getElementById(tab.dataset.tab).classList.add("active");
+  };
+});
 </script>
 </body>
 </html>
