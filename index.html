@@ -233,8 +233,10 @@ function showHistory() {
 }
 
 function toggleDay(header) { const body = header.nextElementSibling; body.style.display = body.style.display === 'block' ? 'none' : 'block'; }
-function restart() { startNewRound(); document.getElementById('practice').style.display = 'block'; document.getElementById('resultCard').style.display = 'none'; }
-
+function restart() {
+  document.getElementById('resultCard').style.display = 'none';
+  startPracticeFlow(); // ✅ 重新走倒计时
+}
 /* ===== 输入处理 ===== */
 document.getElementById('startBtn').onclick = startPracticeFlow;
 
