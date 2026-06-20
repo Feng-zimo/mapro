@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>口算练习</title>
+<title>口算练习 · 含历史记录</title>
 
 <style>
 body{
@@ -45,6 +45,7 @@ body{
   border-radius:8px;background:#e5e7eb;cursor:pointer;
 }
 .key.clr{background:#fee2e2;color:#dc2626;}
+.key.dot{background:#e0f2fe;color:#0369a1;}
 .key.submit{background:#10b981;color:#fff;grid-column:span 3;}
 
 .btn{
@@ -58,6 +59,22 @@ body{
   font-size:48px;font-weight:bold;color:#3b82f6;
   text-align:center;margin:20px 0;
 }
+
+/* 历史样式 */
+.history-item{
+  border:1px solid #e5e7eb;border-radius:8px;
+  margin-bottom:10px;overflow:hidden;
+}
+.history-header{
+  background:#f3f4f6;padding:10px;
+  cursor:pointer;font-weight:500;
+}
+.history-body{
+  padding:8px;display:none;font-size:14px;
+}
+.history-row{margin:4px 0;}
+.history-row.ok{color:#10b981;}
+.history-row.err{color:#ef4444;}
 </style>
 </head>
 
@@ -95,6 +112,7 @@ body{
       <button class="key" data-k="9">9</button>
       <button class="key clr" id="clr">C</button>
       <button class="key" data-k="0">0</button>
+      <button class="key dot" data-k=".">.</button>
       <button class="key submit" id="submitBtn">提交</button>
     </div>
 
@@ -118,28 +136,75 @@ body{
 </div>
 
 <script>
+/* ===== 题库 ===== */
+const BANK = [];
+for (let a = 11; a <= 19; a++)
+  for (let b = 1; b <= 9; b++) {
+    BANK.push(`${a} × ${b}`);
+    BANK.push(`${b} × ${a}`);
+  }
+BANK.push("221 = 17 × 13","247 = 19 × 13","323 = 19 × 17");
+BANK.push("10 = 5 × 2","100 = 25 × 4","500 = 125 × 4");
+BANK.push("2500 = 625 × 4","1000 = 125 × 8");
+for (let i=1;i<=29;i++) BANK.push(`${i}²`);
+for (let i=1;i<=10;i++) BANK.push(`${i}³`);
+for (let i=1;i<=10;i++) BANK.push(`2^${i}`);
+for (let i=1;i<=6;i++) BANK.push(`3^${i}`);
+for (let i=1;i<=5;i++) BANK.push(`4^${i}`);
+for (let i=1;i<=5;i++) BANK.push(`5^${i}`);
+for (let i=1;i<=4;i++) BANK.push(`6^${i}`);
+BANK.push("1/2","1/4","3/4","1/8","3/8","5/8","7/8");
+BANK.push("2/3≈","5/6≈","1/3≈","1/6≈");
+
+function answerOf(q){
+  if(q.includes("=")) return Number(q.split("=")[0]);
+  if(q.includes("×")){const [a,b]=q.split(" × ");return a*b;}
+  if(q.includes("²")) return Math.pow(q.split("²")[0],2);
+  if(q.includes("³")) return Math.pow(q.split("³")[0],3);
+  if(q.includes("^")){const [b,e]=q.split("^");return Math.pow(b,e);}
+  if(q.includes("/") && q.includes("≈")){
+    const [n,d]=q.split("/")[0].split("≈")[0].split("/");
+    return Number((n/d).toFixed(2));
+  }
+  if(q.includes("/")){
+    const [n,d]=q.split("/");
+    return Number(n)/Number(d);
+  }
+  return NaN;
+}
+
 const COUNT = 20;
-const REVERSE = 0.8;
-
-const TYPES = [
-  { name:'×', gen:()=>[r(10,99), r(2,9)] },
-  { name:'+', gen:()=>[r(100,999), r(100,999)] },
-  { name:'-', gen:()=>{let a=r(100,999),b=r(100,999);if(b>a)[a,b]=[b,a];return[a,b];} }
-];
-
-const r = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-
-const state = {
-  list:[], idx:0, total:0, best:Infinity, start:0
-};
-
+const REVERSE = 0.75;
+const state = { list:[], idx:0, total:0, best:Infinity };
 const $ = id => document.getElementById(id);
 
+/* 开始 */
 function startPracticeFlow(){
   $('startBtn').style.display='none';
   $('countdown').style.display='block';
   state.idx=0; state.total=0; state.best=Infinity;
-  state.list=genQuestions();
+
+  const copy=[...BANK];
+  const picked=[];
+  while(picked.length<COUNT){
+    const i=Math.floor(Math.random()*copy.length);
+    const q=copy[i];
+    if(picked.find(p=>p.q===q)) continue;
+    picked.push({q});
+  }
+
+  state.list=picked.map(({q})=>{
+    const a=answerOf(q);
+    const isFrac=q.includes("/") && !q.includes("≈");
+    const rev=!isFrac && Math.random()<REVERSE;
+    if(rev && q.includes("×")){
+      const [x,y]=q.split(" × ");
+      return {q:`${y} × ? = ${a}`, a:Number(x)};
+    }
+    if(isFrac) return {q:`${q} = ?（填小数）`, a};
+    if(q.includes("≈")) return {q:`${q}（保留两位）`, a};
+    return {q:`${q} = ?`, a};
+  });
 
   let n=3;
   $('countdown').innerText=n;
@@ -148,25 +213,6 @@ function startPracticeFlow(){
     if(n===0){clearInterval(t);$('countdown').style.display='none';loadQ();}
     else $('countdown').innerText=n;
   },1000);
-}
-
-function genQuestions(){
-  const list=[];
-  for(let i=0;i<COUNT;i++){
-    const t=TYPES[r(0,TYPES.length-1)];
-    const [a,b]=t.gen();
-    const ans = t.name==='×'?a*b:t.name==='+'?a+b:a-b;
-
-    if(Math.random()<REVERSE){
-      if(Math.random()<0.5)
-        list.push({q:`? ${t.name} ${b} = ${ans}`, a:a});
-      else
-        list.push({q:`${a} ${t.name} ? = ${ans}`, a:b});
-    } else {
-      list.push({q:`${a} ${t.name} ${b} = ?`, a:ans});
-    }
-  }
-  return list;
 }
 
 function loadQ(){
@@ -180,13 +226,13 @@ function loadQ(){
 
 function submit(){
   const v=$('answerBox').innerText;
-  if(!v)return;
+  if(!v) return;
   const cost=Date.now()-state.start;
   const q=state.list[state.idx];
-  const ok=Number(v)===q.a;
+  const ok=Math.abs(Number(v)-q.a)<0.0001;
 
   state.total+=cost;
-  if(cost<state.best)state.best=cost;
+  if(cost<state.best) state.best=cost;
 
   $('totalTime').innerText=(state.total/1000).toFixed(1)+'s';
   $('bestTime').innerText=(state.best/1000).toFixed(1)+'s';
@@ -194,11 +240,13 @@ function submit(){
   $('feedback').className='feedback '+(ok?'ok':'err');
   $('feedback').innerText=ok?'✅ 正确':'❌ 正确答案：'+q.a;
 
+  q.user=v; q.ok=ok;
   state.idx++;
   setTimeout(loadQ,1000);
 }
 
 function finish(){
+  saveHistory();
   $('practice').classList.remove('active');
   $('result').classList.add('active');
   $('resultStats').innerHTML=`
@@ -207,18 +255,53 @@ function finish(){
   `;
 }
 
-/* 事件 */
-keypad.onclick=e=>{
-  if(e.target.dataset.k)$('answerBox').innerText+=e.target.dataset.k;
-  if(e.target.id==='clr')$('answerBox').innerText=$('answerBox').innerText.slice(0,-1);
-  if(e.target.id==='submitBtn')submit();
-};
+/* 历史 */
+function saveHistory(){
+  const h=JSON.parse(localStorage.getItem('math_history')||'[]');
+  h.unshift({
+    time:new Date().toLocaleString(),
+    total:state.total,
+    list:state.list
+  });
+  localStorage.setItem('math_history',JSON.stringify(h.slice(0,30)));
+  renderHistory();
+}
 
-document.onkeydown=e=>{
-  if(e.key>='0'&&e.key<='9')$('answerBox').innerText+=e.key;
-  if(e.key==='Backspace')$('answerBox').innerText=$('answerBox').innerText.slice(0,-1);
-  if(e.key==='Enter')submit();
-};
+function renderHistory(){
+  const h=JSON.parse(localStorage.getItem('math_history')||'[]');
+  $('historyList').innerHTML=h.map((g,i)=>`
+    <div class="history-item">
+      <div class="history-header" onclick="
+        const b=this.nextElementSibling;
+        b.style.display=b.style.display==='block'?'none':'block'
+      ">
+        ${g.time} — 正确 ${g.list.filter(q=>q.ok).length}/${g.list.length}
+      </div>
+      <div class="history-body">
+        ${g.list.map(q=>`
+          <div class="history-row ${q.ok?'ok':'err'}">
+            ${q.q} → 你的答案：${q.user}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+/* 事件 */
+document.addEventListener('DOMContentLoaded',()=>{
+  keypad.onclick=e=>{
+    if(e.target.dataset.k) $('answerBox').innerText+=e.target.dataset.k;
+    if(e.target.id==='clr') $('answerBox').innerText=$('answerBox').innerText.slice(0,-1);
+    if(e.target.id==='submitBtn') submit();
+  };
+  document.onkeydown=e=>{
+    if(e.key>='0'&&e.key<='9') $('answerBox').innerText+=e.key;
+    if(e.key==='.') $('answerBox').innerText+='.';
+    if(e.key==='Backspace') $('answerBox').innerText=$('answerBox').innerText.slice(0,-1);
+    if(e.key==='Enter') submit();
+  };
+});
 
 function restart(){
   $('result').classList.remove('active');
@@ -229,7 +312,9 @@ function restart(){
 
 function switchTab(t){
   ['practice','result','historyPanel'].forEach(id=>$(id).classList.remove('active'));
-  $(t==='history'?'historyPanel':'practice').classList.add('active');
+  const panel=t==='history'?'historyPanel':'practice';
+  $(panel).classList.add('active');
+  if(t==='history') renderHistory();
 }
 </script>
 </body>
