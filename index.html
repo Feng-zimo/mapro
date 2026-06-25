@@ -2,124 +2,75 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>口算练习 · 含历史记录</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>口算练习 · 100题</title>
 <style>
-body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  background:#f5f7fa;margin:0;padding:16px;
-  display:flex;justify-content:center;
-}
-.container{
-  width:100%;max-width:420px;background:#fff;
-  border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.08);
-  padding:16px;box-sizing:border-box;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7fa;margin:0;padding:16px;display:flex;justify-content:center;}
+.container{width:100%;max-width:420px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.08);padding:16px;box-sizing:border-box;}
 .tabs{display:flex;margin-bottom:12px;border-bottom:1px solid #e5e7eb;}
 .tab{padding:8px 16px;cursor:pointer;color:#6b7280;font-weight:500;}
 .tab.active{color:#3b82f6;border-bottom:2px solid #3b82f6;}
-
 .card{display:none;flex-direction:column;align-items:center;}
 .card.active{display:flex;}
-
-.stats{
-  width:100%;display:flex;justify-content:space-around;
-  margin-bottom:16px;font-size:14px;color:#4b5563;
-}
-.question{font-size:26px;font-weight:600;margin:24px 0;color:#111827;text-align:center;}
-.answer-input{
-  width:100%;padding:16px;border:1px solid #d1d5db;
-  border-radius:8px;font-size:20px;text-align:center;
-  margin-bottom:12px;box-sizing:border-box;
-}
+.stats{width:100%;display:flex;justify-content:space-around;margin-bottom:16px;font-size:14px;color:#4b5563;}
+.question{font-size:24px;font-weight:600;margin:24px 0;color:#111827;text-align:center;}
+.answer-input{width:100%;padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:20px;text-align:center;margin-bottom:12px;box-sizing:border-box;}
 .feedback{font-size:16px;margin-bottom:16px;min-height:24px;}
 .ok{color:#10b981;}
 .err{color:#ef4444;}
-
-.keypad{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;
-}
-.key{
-  padding:16px;font-size:18px;border:none;
-  border-radius:8px;background:#e5e7eb;cursor:pointer;
-}
+.keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;}
+.key{padding:16px;font-size:18px;border:none;border-radius:8px;background:#e5e7eb;cursor:pointer;}
 .key.clr{background:#fee2e2;color:#dc2626;}
+.key.mul{background:#dbeafe;color:#1d4ed8;}
 .key.dot{background:#e0f2fe;color:#0369a1;}
-.key.submit{background:#10b981;color:#fff;grid-column:span 3;}
-
-.btn{
-  padding:12px 24px;border:none;border-radius:8px;
-  background:#3b82f6;color:#fff;font-size:16px;
-  cursor:pointer;margin-top:16px;
-}
+.key.submit{background:#10b981;color:#fff;grid-column:span 4;}
+.btn{padding:12px 24px;border:none;border-radius:8px;background:#3b82f6;color:#fff;font-size:16px;cursor:pointer;margin-top:16px;}
 .btn.secondary{background:#6b7280;}
-
-.countdown{
-  font-size:48px;font-weight:bold;color:#3b82f6;
-  text-align:center;margin:20px 0;
-}
-
-/* 历史样式 */
-.history-item{
-  border:1px solid #e5e7eb;border-radius:8px;
-  margin-bottom:10px;overflow:hidden;
-}
-.history-header{
-  background:#f3f4f6;padding:10px;
-  cursor:pointer;font-weight:500;
-}
-.history-body{
-  padding:8px;display:none;font-size:14px;
-}
+.countdown{font-size:48px;font-weight:bold;color:#3b82f6;text-align:center;margin:20px 0;}
+.history-item{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden;}
+.history-header{background:#f3f4f6;padding:10px;cursor:pointer;font-weight:500;}
+.history-body{padding:8px;display:none;font-size:14px;}
 .history-row{margin:4px 0;}
 .history-row.ok{color:#10b981;}
 .history-row.err{color:#ef4444;}
 </style>
 </head>
-
 <body>
 <div class="container">
-
   <div class="tabs">
     <div class="tab active" onclick="switchTab('practice')">练习</div>
     <div class="tab" onclick="switchTab('history')">历史</div>
   </div>
 
-  <!-- 练习 -->
   <div id="practice" class="card active">
     <div class="stats">
-      <div>进度: <span id="progress">0/20</span></div>
-      <div>总耗时: <span id="totalTime">0s</span></div>
+      <div>进度: <span id="progress">0/100</span></div>
+      <div>正确: <span id="correct">0</span></div>
       <div>最快: <span id="bestTime">--s</span></div>
     </div>
-
     <div id="countdown" class="countdown" style="display:none;"></div>
-
     <div id="question" class="question">点击开始</div>
     <div id="answerBox" class="answer-input" style="display:none;"></div>
     <div id="feedback" class="feedback"></div>
-
     <div id="keypad" class="keypad" style="display:none;">
       <button class="key" data-k="1">1</button>
       <button class="key" data-k="2">2</button>
       <button class="key" data-k="3">3</button>
+      <button class="key clr" id="clr">C</button>
       <button class="key" data-k="4">4</button>
       <button class="key" data-k="5">5</button>
       <button class="key" data-k="6">6</button>
+      <button class="key mul" data-k="×">×</button>
       <button class="key" data-k="7">7</button>
       <button class="key" data-k="8">8</button>
       <button class="key" data-k="9">9</button>
-      <button class="key clr" id="clr">C</button>
-      <button class="key" data-k="0">0</button>
       <button class="key dot" data-k=".">.</button>
+      <button class="key" data-k="0">0</button>
       <button class="key submit" id="submitBtn">提交</button>
     </div>
-
-    <button class="btn" id="startBtn" onclick="startPracticeFlow()">开始练习</button>
+    <button class="btn" id="startBtn" onclick="startPracticeFlow()">开始练习（100题）</button>
   </div>
 
-  <!-- 结果 -->
   <div id="result" class="card">
     <div class="title">练习完成！</div>
     <div id="resultStats"></div>
@@ -127,159 +78,253 @@ body{
     <button class="btn secondary" onclick="switchTab('history')">查看历史</button>
   </div>
 
-  <!-- 历史 -->
   <div id="historyPanel" class="card">
     <h3>历史记录</h3>
     <div id="historyList"></div>
   </div>
-
 </div>
 
 <script>
 /* ===== 题库 ===== */
-const BANK = [];
-for (let a = 11; a <= 19; a++)
+
+// 1. 11~19 × 1~9（正考 + 反考）
+const MULTIPLICATION = [];
+for (let a = 11; a <= 19; a++) {
   for (let b = 1; b <= 9; b++) {
-    BANK.push(`${a} × ${b}`);
-    BANK.push(`${b} × ${a}`);
+    MULTIPLICATION.push({ a, b, result: a * b });
   }
-BANK.push("221 = 17 × 13","247 = 19 × 13","323 = 19 × 17");
-BANK.push("10 = 5 × 2","100 = 25 × 4","500 = 125 × 4");
-BANK.push("2500 = 625 × 4","1000 = 125 × 8");
-for (let i=1;i<=29;i++) BANK.push(`${i}²`);
-for (let i=1;i<=10;i++) BANK.push(`${i}³`);
-for (let i=1;i<=10;i++) BANK.push(`2^${i}`);
-for (let i=1;i<=6;i++) BANK.push(`3^${i}`);
-for (let i=1;i<=5;i++) BANK.push(`4^${i}`);
-for (let i=1;i<=5;i++) BANK.push(`5^${i}`);
-for (let i=1;i<=4;i++) BANK.push(`6^${i}`);
-BANK.push("1/2","1/4","3/4","1/8","3/8","5/8","7/8");
-BANK.push("2/3≈","5/6≈","1/3≈","1/6≈");
-
-function answerOf(q){
-  if(q.includes("=")) return Number(q.split("=")[0]);
-  if(q.includes("×")){const [a,b]=q.split(" × ");return a*b;}
-  if(q.includes("²")) return Math.pow(q.split("²")[0],2);
-  if(q.includes("³")) return Math.pow(q.split("³")[0],3);
-  if(q.includes("^")){const [b,e]=q.split("^");return Math.pow(b,e);}
-  if(q.includes("/") && q.includes("≈")){
-    const [n,d]=q.split("/")[0].split("≈")[0].split("/");
-    return Number((n/d).toFixed(2));
-  }
-  if(q.includes("/")){
-    const [n,d]=q.split("/");
-    return Number(n)/Number(d);
-  }
-  return NaN;
 }
 
-const COUNT = 20;
-const REVERSE = 0.75;
-const state = { list:[], idx:0, total:0, best:Infinity };
-const $ = id => document.getElementById(id);
+// 2. 幂运算（正考 + 反考）
+const POWERS = [];
 
-/* 开始 */
-function startPracticeFlow(){
-  $('startBtn').style.display='none';
-  $('countdown').style.display='block';
-  state.idx=0; state.total=0; state.best=Infinity;
+// 2^1 ~ 2^10
+for (let i = 1; i <= 10; i++) POWERS.push({ base: 2, exp: i, result: Math.pow(2, i) });
+// 3^1 ~ 3^6
+for (let i = 1; i <= 6; i++) POWERS.push({ base: 3, exp: i, result: Math.pow(3, i) });
+// 4^1 ~ 4^5
+for (let i = 1; i <= 5; i++) POWERS.push({ base: 4, exp: i, result: Math.pow(4, i) });
+// 5^1 ~ 5^5
+for (let i = 1; i <= 5; i++) POWERS.push({ base: 5, exp: i, result: Math.pow(5, i) });
+// 6^1 ~ 6^4
+for (let i = 1; i <= 4; i++) POWERS.push({ base: 6, exp: i, result: Math.pow(6, i) });
+// 1^3 ~ 10^3
+for (let i = 1; i <= 10; i++) POWERS.push({ base: i, exp: 3, result: Math.pow(i, 3), isCube: true });
+// 1^2 ~ 29^2
+for (let i = 1; i <= 29; i++) POWERS.push({ base: i, exp: 2, result: Math.pow(i, 2), isSquare: true });
 
-  const copy=[...BANK];
-  const picked=[];
-  while(picked.length<COUNT){
-    const i=Math.floor(Math.random()*copy.length);
-    const q=copy[i];
-    if(picked.find(p=>p.q===q)) continue;
-    picked.push({q});
-  }
+// 3. 简算（因数分解）—— 只反考：? * ? = 积
+const FACTORING = [
+  { factors: "17 × 13", result: 221 },
+  { factors: "19 × 13", result: 247 },
+  { factors: "19 × 17", result: 323 },
+  { factors: "5 × 2", result: 10 },
+  { factors: "25 × 4", result: 100 },
+  { factors: "125 × 4", result: 500 },
+  { factors: "625 × 4", result: 2500 },
+  { factors: "125 × 8", result: 1000 },
+];
 
-  state.list=picked.map(({q})=>{
-    const a=answerOf(q);
-    const isFrac=q.includes("/") && !q.includes("≈");
-    const rev=!isFrac && Math.random()<REVERSE;
-    if(rev && q.includes("×")){
-      const [x,y]=q.split(" × ");
-      return {q:`${y} × ? = ${a}`, a:Number(x)};
+// 4. 分数（只正考：1/8 = ? 填小数）
+const FRACTIONS = [
+  { q: "1/2 = ?（填小数）", a: 0.5 },
+  { q: "1/4 = ?（填小数）", a: 0.25 },
+  { q: "3/4 = ?（填小数）", a: 0.75 },
+  { q: "1/8 = ?（填小数）", a: 0.125 },
+  { q: "3/8 = ?（填小数）", a: 0.375 },
+  { q: "5/8 = ?（填小数）", a: 0.625 },
+  { q: "7/8 = ?（填小数）", a: 0.875 },
+  { q: "2/3 ≈ ?（保留两位小数）", a: 0.67 },
+  { q: "5/6 ≈ ?（保留两位小数）", a: 0.83 },
+  { q: "1/3 ≈ ?（保留两位小数）", a: 0.33 },
+  { q: "1/6 ≈ ?（保留两位小数）", a: 0.17 },
+];
+
+/* ===== 生成题目 ===== */
+function generateQuestions() {
+  const questions = [];
+  const REVERSE_RATIO = 0.5; // 50% 概率反考
+
+  // --- 乘法表：正考 + 反考 ---
+  const multShuffled = [...MULTIPLICATION].sort(() => Math.random() - 0.5);
+  for (const m of multShuffled) {
+    if (questions.length >= 100) break;
+    if (Math.random() < REVERSE_RATIO) {
+      // 反考：? * ? = 积  → 答案是 "11 × 3" 这样的字符串
+      questions.push({
+        q: `? × ? = ${m.result}`,
+        a: `${m.a} × ${m.b}`,
+        type: 'mult-reverse'
+      });
+    } else {
+      // 正考：a × b = ?
+      questions.push({
+        q: `${m.a} × ${m.b} = ?`,
+        a: m.result,
+        type: 'mult-normal'
+      });
     }
-    if(isFrac) return {q:`${q} = ?（填小数）`, a};
-    if(q.includes("≈")) return {q:`${q}（保留两位）`, a};
-    return {q:`${q} = ?`, a};
-  });
+  }
 
-  let n=3;
-  $('countdown').innerText=n;
-  const t=setInterval(()=>{
+  // --- 幂运算：正考 + 反考 ---
+  const powShuffled = [...POWERS].sort(() => Math.random() - 0.5);
+  for (const p of powShuffled) {
+    if (questions.length >= 100) break;
+    if (Math.random() < REVERSE_RATIO) {
+      // 反考：? * ? = 结果  → 答案是 "2^10" 或 "3^4" 或 "15^2" 等
+      const factorStr = `${p.base}^${p.exp}`;
+      questions.push({
+        q: `? * ? = ${p.result}`,
+        a: factorStr,
+        type: 'power-reverse'
+      });
+    } else {
+      // 正考
+      if (p.isSquare) {
+        questions.push({
+          q: `${p.base}² = ?`,
+          a: p.result,
+          type: 'square-normal'
+        });
+      } else if (p.isCube) {
+        questions.push({
+          q: `${p.base}³ = ?`,
+          a: p.result,
+          type: 'cube-normal'
+        });
+      } else {
+        questions.push({
+          q: `${p.base}^${p.exp} = ?`,
+          a: p.result,
+          type: 'power-normal'
+        });
+      }
+    }
+  }
+
+  // --- 简算：只反考 ? * ? = 积 ---
+  const factorShuffled = [...FACTORING].sort(() => Math.random() - 0.5);
+  for (const f of factorShuffled) {
+    if (questions.length >= 100) break;
+    questions.push({
+      q: `? * ? = ${f.result}`,
+      a: f.factors,
+      type: 'factor'
+    });
+  }
+
+  // --- 分数：只正考 ---
+  const fracShuffled = [...FRACTIONS].sort(() => Math.random() - 0.5);
+  for (const f of fracShuffled) {
+    if (questions.length >= 100) break;
+    questions.push({
+      q: f.q,
+      a: f.a,
+      type: 'fraction'
+    });
+  }
+
+  // 截断到 100 题，打乱顺序
+  return questions.slice(0, 100).sort(() => Math.random() - 0.5);
+}
+
+/* ===== 状态 ===== */
+const TRANSITION_MS = 300;
+let state = { list: [], idx: 0, correct: 0, totalMs: 0, bestMs: Infinity };
+
+/* ===== 开始 ===== */
+function startPracticeFlow() {
+  $('startBtn').style.display = 'none';
+  $('countdown').style.display = 'block';
+  state = { list: generateQuestions(), idx: 0, correct: 0, totalMs: 0, bestMs: Infinity };
+
+  let n = 3;
+  $('countdown').innerText = n;
+  const t = setInterval(() => {
     n--;
-    if(n===0){clearInterval(t);$('countdown').style.display='none';loadQ();}
-    else $('countdown').innerText=n;
-  },1000);
+    if (n === 0) { clearInterval(t); $('countdown').style.display = 'none'; loadQ(); }
+    else $('countdown').innerText = n;
+  }, 1000);
 }
 
-function loadQ(){
-  if(state.idx>=COUNT){finish();return;}
-  $('question').innerText=state.list[state.idx].q;
-  $('answerBox').innerText='';
-  $('answerBox').style.display='block';
-  $('keypad').style.display='grid';
-  state.start=Date.now();
+function loadQ() {
+  if (state.idx >= 100) { finish(); return; }
+  $('question').innerText = state.list[state.idx].q;
+  $('answerBox').innerText = '';
+  $('answerBox').style.display = 'block';
+  $('keypad').style.display = 'grid';
+  state.start = Date.now();
 }
 
-function submit(){
-  const v=$('answerBox').innerText;
-  if(!v) return;
-  const cost=Date.now()-state.start;
-  const q=state.list[state.idx];
-  const ok=Math.abs(Number(v)-q.a)<0.0001;
+function submit() {
+  const v = $('answerBox').innerText.trim();
+  if (!v) return;
+  const cost = Date.now() - state.start;
+  const q = state.list[state.idx];
 
-  state.total+=cost;
-  if(cost<state.best) state.best=cost;
+  // 判断答案
+  let ok = false;
+  if (q.type === 'fraction') {
+    ok = Math.abs(Number(v) - q.a) < 0.01;
+  } else if (typeof q.a === 'number') {
+    ok = Math.abs(Number(v) - q.a) < 0.0001;
+  } else {
+    // 字符串比较（如 "11 × 3"、"2^10"）
+    ok = v.replace(/\s/g, '') === q.a.replace(/\s/g, '');
+  }
 
-  $('totalTime').innerText=(state.total/1000).toFixed(1)+'s';
-  $('bestTime').innerText=(state.best/1000).toFixed(1)+'s';
-  $('progress').innerText=(state.idx+1)+'/'+COUNT;
-  $('feedback').className='feedback '+(ok?'ok':'err');
-  $('feedback').innerText=ok?'✅ 正确':'❌ 正确答案：'+q.a;
+  state.totalMs += cost;
+  if (cost < state.bestMs) state.bestMs = cost;
+  if (ok) state.correct++;
 
-  q.user=v; q.ok=ok;
+  $('progress').innerText = (state.idx + 1) + '/100';
+  $('correct').innerText = state.correct;
+  $('bestTime').innerText = (state.bestMs / 1000).toFixed(1) + 's';
+  $('feedback').className = 'feedback ' + (ok ? 'ok' : 'err');
+  $('feedback').innerText = ok ? '✅ 正确' : '❌ 正确答案：' + q.a;
+
   state.idx++;
-  setTimeout(loadQ,1000);
+  setTimeout(loadQ, ok ? TRANSITION_MS : 1000);
 }
 
-function finish(){
+function finish() {
   saveHistory();
   $('practice').classList.remove('active');
   $('result').classList.add('active');
-  $('resultStats').innerHTML=`
-    总耗时：${(state.total/1000).toFixed(1)}s<br>
-    最快一题：${(state.best/1000).toFixed(1)}s
+  $('resultStats').innerHTML = `
+    共 100 题<br>
+    正确 ${state.correct} 题（${((state.correct / 100) * 100).toFixed(1)}%）<br>
+    总耗时 ${(state.totalMs / 1000).toFixed(1)}s<br>
+    最快一题 ${(state.bestMs / 1000).toFixed(1)}s
   `;
 }
 
-/* 历史 */
-function saveHistory(){
-  const h=JSON.parse(localStorage.getItem('math_history')||'[]');
+/* ===== 历史 ===== */
+function saveHistory() {
+  const h = JSON.parse(localStorage.getItem('math_history') || '[]');
   h.unshift({
-    time:new Date().toLocaleString(),
-    total:state.total,
-    list:state.list
+    time: new Date().toLocaleString(),
+    correct: state.correct,
+    list: state.list.map((q, i) => ({
+      q: q.q,
+      user: q.user || '未答',
+      ok: q.ok
+    }))
   });
-  localStorage.setItem('math_history',JSON.stringify(h.slice(0,30)));
+  localStorage.setItem('math_history', JSON.stringify(h.slice(0, 30)));
   renderHistory();
 }
 
-function renderHistory(){
-  const h=JSON.parse(localStorage.getItem('math_history')||'[]');
-  $('historyList').innerHTML=h.map((g,i)=>`
+function renderHistory() {
+  const h = JSON.parse(localStorage.getItem('math_history') || '[]');
+  $('historyList').innerHTML = h.map(g => `
     <div class="history-item">
-      <div class="history-header" onclick="
-        const b=this.nextElementSibling;
-        b.style.display=b.style.display==='block'?'none':'block'
-      ">
-        ${g.time} — 正确 ${g.list.filter(q=>q.ok).length}/${g.list.length}
+      <div class="history-header" onclick="toggleDay(this)">
+        ${g.time} — 正确 ${g.correct}/100
       </div>
       <div class="history-body">
-        ${g.list.map(q=>`
-          <div class="history-row ${q.ok?'ok':'err'}">
+        ${g.list.map(q => `
+          <div class="history-row ${q.ok ? 'ok' : 'err'}">
             ${q.q} → 你的答案：${q.user}
           </div>
         `).join('')}
@@ -288,34 +333,35 @@ function renderHistory(){
   `).join('');
 }
 
-/* 事件 */
-document.addEventListener('DOMContentLoaded',()=>{
-  keypad.onclick=e=>{
-    if(e.target.dataset.k) $('answerBox').innerText+=e.target.dataset.k;
-    if(e.target.id==='clr') $('answerBox').innerText=$('answerBox').innerText.slice(0,-1);
-    if(e.target.id==='submitBtn') submit();
+/* ===== 工具 ===== */
+function $(id) { return document.getElementById(id); }
+function toggleDay(h) {
+  const b = h.nextElementSibling;
+  b.style.display = b.style.display === 'block' ? 'none' : 'block';
+}
+function restart() { location.reload(); }
+function switchTab(t) {
+  ['practice', 'result', 'historyPanel'].forEach(id => $(id).classList.remove('active'));
+  $(t === 'history' ? 'historyPanel' : 'practice').classList.add('active');
+  if (t === 'history') renderHistory();
+}
+
+/* ===== 事件 ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  keypad.onclick = e => {
+    if (e.target.dataset.k) $('answerBox').innerText += e.target.dataset.k;
+    if (e.target.id === 'clr') $('answerBox').innerText = $('answerBox').innerText.slice(0, -1);
+    if (e.target.id === 'submitBtn') submit();
   };
-  document.onkeydown=e=>{
-    if(e.key>='0'&&e.key<='9') $('answerBox').innerText+=e.key;
-    if(e.key==='.') $('answerBox').innerText+='.';
-    if(e.key==='Backspace') $('answerBox').innerText=$('answerBox').innerText.slice(0,-1);
-    if(e.key==='Enter') submit();
+  document.onkeydown = e => {
+    if (e.key >= '0' && e.key <= '9') $('answerBox').innerText += e.key;
+    if (e.key === '×') $('answerBox').innerText += e.key;
+    if (e.key === '^') $('answerBox').innerText += e.key;
+    if (e.key === '.') $('answerBox').innerText += '.';
+    if (e.key === 'Backspace') $('answerBox').innerText = $('answerBox').innerText.slice(0, -1);
+    if (e.key === 'Enter') submit();
   };
 });
-
-function restart(){
-  $('result').classList.remove('active');
-  $('practice').classList.add('active');
-  $('startBtn').style.display='inline-block';
-  $('question').innerText='点击开始';
-}
-
-function switchTab(t){
-  ['practice','result','historyPanel'].forEach(id=>$(id).classList.remove('active'));
-  const panel=t==='history'?'historyPanel':'practice';
-  $(panel).classList.add('active');
-  if(t==='history') renderHistory();
-}
 </script>
 </body>
 </html>
