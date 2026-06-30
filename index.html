@@ -33,8 +33,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 
 .countdown{font-size:48px;font-weight:bold;color:#3b82f6;text-align:center;margin:20px 0;}
 
-/* 答案面板 */
-#answerPanel{width:100%;}
+/* 答案页 */
 #answerList{max-height:65vh;overflow:auto;font-size:14px;}
 .answer-row{padding:6px 0;border-bottom:1px solid #f3f4f6;}
 .answer-row span{font-weight:600;color:#111827;}
@@ -111,7 +110,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 </div>
 
 <script>
-/* ===== 题库（严格保留） ===== */
+/* ===== 题库 ===== */
 const MULTIPLICATION = [];
 for (let a = 11; a <= 19; a++)
   for (let b = 1; b <= 9; b++)
@@ -151,7 +150,7 @@ const FRACTIONS = [
   { q: "1/6 ≈ ?（保留两位小数）", a: 0.17 },
 ];
 
-/* ===== 生成题目 ===== */
+/* ===== 生成题目（关键：stdVal 是数值）===== */
 function generateQuestions() {
   const questions = [];
   const REVERSE_RATIO = 0.5;
@@ -160,9 +159,19 @@ function generateQuestions() {
   for (const m of multShuffled) {
     if (questions.length >= 100) break;
     if (Math.random() < REVERSE_RATIO) {
-      questions.push({ q: `? × ? = ${m.result}`, a: `${m.a} × ${m.b}`, std: `${m.a} × ${m.b}`, type: 'mult-reverse' });
+      questions.push({
+        q: `? × ? = ${m.result}`,
+        std: `${m.a} × ${m.b}`,
+        stdVal: m.result,
+        type: 'mult-reverse'
+      });
     } else {
-      questions.push({ q: `${m.a} × ${m.b} = ?`, a: m.result, std: `${m.result}`, type: 'mult-normal' });
+      questions.push({
+        q: `${m.a} × ${m.b} = ?`,
+        std: `${m.result}`,
+        stdVal: m.result,
+        type: 'mult-normal'
+      });
     }
   }
 
@@ -170,24 +179,43 @@ function generateQuestions() {
   for (const p of powShuffled) {
     if (questions.length >= 100) break;
     if (Math.random() < REVERSE_RATIO) {
-      questions.push({ q: `? * ? = ${p.result}`, a: `${p.base}^${p.exp}`, std: `${p.base}^${p.exp}`, type: 'power-reverse' });
+      questions.push({
+        q: `? * ? = ${p.result}`,
+        std: `${p.base}^${p.exp}`,
+        stdVal: p.result,
+        type: 'power-reverse'
+      });
     } else {
-      if (p.isSquare) questions.push({ q: `${p.base}² = ?`, a: p.result, std: `${p.result}`, type: 'square' });
-      else if (p.isCube) questions.push({ q: `${p.base}³ = ?`, a: p.result, std: `${p.result}`, type: 'cube' });
-      else questions.push({ q: `${p.base}^${p.exp} = ?`, a: p.result, std: `${p.result}`, type: 'power' });
+      const symbol = p.isSquare ? '²' : p.isCube ? '³' : `^${p.exp}`;
+      questions.push({
+        q: `${p.base}${symbol} = ?`,
+        std: `${p.result}`,
+        stdVal: p.result,
+        type: 'power-normal'
+      });
     }
   }
 
   const factorShuffled = [...FACTORING].sort(() => Math.random() - 0.5);
   for (const f of factorShuffled) {
     if (questions.length >= 100) break;
-    questions.push({ q: `? * ? = ${f.result}`, a: f.factors, std: f.factors, type: 'factor' });
+    questions.push({
+      q: `? * ? = ${f.result}`,
+      std: f.factors,
+      stdVal: f.result,
+      type: 'factor'
+    });
   }
 
   const fracShuffled = [...FRACTIONS].sort(() => Math.random() - 0.5);
   for (const f of fracShuffled) {
     if (questions.length >= 100) break;
-    questions.push({ q: f.q, a: f.a, std: String(f.a), type: 'fraction' });
+    questions.push({
+      q: f.q,
+      std: String(f.a),
+      stdVal: f.a,
+      type: 'fraction'
+    });
   }
 
   return questions.slice(0, 100).sort(() => Math.random() - 0.5);
@@ -196,8 +224,9 @@ function generateQuestions() {
 /* ===== 安全计算 ===== */
 function safeEval(expr) {
   try {
+    expr = expr.replace(/×/g, '*');
     if (/^[0-9+\-*/^.]+$/.test(expr)) {
-      return Function(`"use strict"; return (${expr.replace(/\^/g, '**')})`)();
+      return Function('"use strict"; return (' + expr.replace(/\^/g, '**') + ')')();
     }
   } catch {}
   return NaN;
@@ -206,7 +235,7 @@ function safeEval(expr) {
 /* ===== 状态 ===== */
 let state = { list: [], idx: 0, correct: 0, totalMs: 0, bestMs: Infinity };
 
-/* ===== 开始练习 ===== */
+/* ===== 开始 ===== */
 function startPracticeFlow() {
   $('startBtn').style.display = 'none';
   $('countdown').style.display = 'block';
@@ -231,22 +260,16 @@ function loadQ() {
   state.start = Date.now();
 }
 
+/* ===== 判题（唯一真理）===== */
 function submit() {
-  const v = $('answerBox').innerText.trim().replace(/×/g, '*');
+  const v = $('answerBox').innerText.trim();
   if (!v) return;
 
   const cost = Date.now() - state.start;
   const q = state.list[state.idx];
-  let ok = false;
 
-  if (typeof q.a === 'number') {
-    const userVal = safeEval(v);
-    ok = Math.abs(userVal - q.a) < 0.0001;
-  } else {
-    const userVal = safeEval(v);
-    const answerVal = safeEval(q.a.replace(/×/g, '*'));
-    ok = Math.abs(userVal - answerVal) < 0.0001;
-  }
+  const userVal = safeEval(v);
+  const ok = Math.abs(userVal - q.stdVal) < 0.0001;
 
   q.user = v;
   q.ok = ok;
@@ -261,7 +284,7 @@ function submit() {
   $('feedback').className = 'feedback ' + (ok ? 'ok' : 'err');
   $('feedback').innerText = ok ? '✅ 正确' : '❌ 正确答案：' + q.std;
 
-  saveHistory(); // ✅ 每题保存
+  saveHistory();
   state.idx++;
   setTimeout(loadQ, ok ? 300 : 1000);
 }
@@ -278,7 +301,7 @@ function finish() {
   `;
 }
 
-/* ===== 历史（每题） ===== */
+/* ===== 历史（每题）===== */
 function saveHistory() {
   const h = JSON.parse(localStorage.getItem('math_history') || '[]');
   h.unshift({
@@ -315,11 +338,11 @@ function renderHistory() {
   `).join('');
 }
 
-/* ===== 答案面板 ===== */
+/* ===== 答案页 ===== */
 function renderAnswers() {
   $('answerList').innerHTML = state.list.map((q, i) => `
     <div class="answer-row">
-      <b>${i + 1}.</b> ${q.q} &nbsp;→&nbsp; <span>${q.std}</span>
+      <b>${i + 1}.</b> ${q.q} → <span>${q.std}</span>
     </div>
   `).join('');
 }
@@ -341,11 +364,11 @@ function switchTab(t) {
     $('historyPanel').classList.add('active');
     renderHistory();
   } else {
-    $('practice').classList.add('active');
+    $(t).classList.add('active');
   }
 }
 
-/* ===== 键盘 & 虚拟键盘 ===== */
+/* ===== 输入 ===== */
 document.addEventListener('DOMContentLoaded', () => {
   $('keypad').onclick = e => {
     if (e.target.dataset.k) $('answerBox').innerText += e.target.dataset.k;
